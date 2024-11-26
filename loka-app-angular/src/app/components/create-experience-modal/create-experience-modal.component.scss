@@ -1,0 +1,66 @@
+/* Set the dialog content to take available space and be scrollable */
+.dialog-content {
+  max-height: 60vh; /* Adjust as needed */
+  overflow-y: auto;
+  padding-right: 20px; /* To prevent scrollbar overlap */
+}
+
+/* Ensure full-width fields */
+.full-width {
+  width: 100%;
+}
+
+/* Style for the map section */
+.map-section {
+  margin-bottom: 16px;
+}
+
+.map-container-small {
+  width: 100%;
+  height: 180px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Pictures preview */
+.pictures-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.picture-item img {
+  width: 100px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Style for the dialog actions to fix them at the bottom */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  position: sticky;
+  bottom: 0;
+}
+.full-width {
+  width: 100%;
+}
+
+.selected-dates {
+  margin-top: 16px;
+}
+
+.selected-dates ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.selected-dates li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}

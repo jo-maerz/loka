@@ -1,0 +1,37 @@
+.DS_Store
+
+#Frontend
+## Compiled output
+loka-app-angular/dist
+loka-app-angular/tmp
+loka-app-angular/out-tsc
+loka-app-angular/bazel-out
+
+## Node
+loka-app-angular/node_modules
+loka-app-angularnpm-debug.log
+loka-app-angularyarn-error.log
+
+## IDEs and editors
+loka-app-angular/.vscode
+
+## Visual Studio Code
+loka-app-angular/.vscode/*
+loka-app-angular/!.vscode/settings.json
+loka-app-angular/!.vscode/tasks.json
+loka-app-angular/!.vscode/launch.json
+loka-app-angular/!.vscode/extensions.json
+loka-app-angular/.history/*
+
+## Miscellaneous
+loka-app-angular/.angular/cache
+loka-app-angular/.sass-cache/
+loka-app-angular/connect.lock
+loka-app-angular/coverage
+loka-app-angular/libpeerconnection.log
+loka-app-angular/testem.log
+loka-app-angular/typings
+
+## System files
+loka-app-angular/.DS_Store
+loka-app-angular/Thumbs.db

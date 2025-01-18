@@ -1,0 +1,19 @@
+<div class="popup-content">
+  <h3>{{ experience.name }}</h3>
+  <p>{{ experience.description }}</p>
+  <p><strong>Category:</strong> {{ experience.category }}</p>
+  <p><strong>Dates:</strong> {{ formattedDateRange }}</p>
+
+  <div *ngIf="experience.pictures.length > 0" class="popup-images">
+    <img
+      *ngFor="let pic of experience.pictures"
+      [src]="pic"
+      alt="Experience Image"
+      class="popup-image"
+    />
+  </div>
+
+  <p *ngIf="experience.hashtags.length > 0">
+    <strong>Hashtags:</strong> {{ experience.hashtags.join(" ") }}
+  </p>
+</div>

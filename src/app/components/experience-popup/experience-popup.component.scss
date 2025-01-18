@@ -1,0 +1,23 @@
+.popup-content {
+    width: 250px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .popup-content h3 {
+    margin-top: 0;
+    color: #1976d2; /* Angular Material Primary Color */
+  }
+  
+  .popup-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 10px 0;
+  }
+  
+  .popup-image {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+  

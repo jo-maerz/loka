@@ -21,6 +21,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { ExperiencePopupComponent } from '../experience-popup/experience-popup.component';
+import { AuthService } from '../../services/auth.service';
+import { LoginDialogComponent } from '../../login-dialog/login-dialog.component';
 
 @Component({
   selector: 'app-leaflet-map',
@@ -43,7 +45,8 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     public dialog: MatDialog,
     private injector: Injector,
     private appRef: ApplicationRef,
-    private componentFactoryResolver: ComponentFactoryResolver
+    private componentFactoryResolver: ComponentFactoryResolver,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -127,19 +130,40 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   openModal(): void {
-    const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
-      width: '600px',
-    });
+    this.authService
+      .isLoggedIn()
+      .then((isLoggedIn) => {
+        if (isLoggedIn) {
+          const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
+            width: '600px',
+          });
 
-    dialogRef.afterClosed().subscribe((result: Experience) => {
-      if (result) {
-        this.experienceService
-          .createExperience(result)
-          .subscribe(() =>
-            this.experienceService.getAllExperiences().subscribe()
-          );
-      }
-    });
+          dialogRef.afterClosed().subscribe((result: Experience) => {
+            if (result) {
+              this.experienceService
+                .createExperience(result)
+                .subscribe(() =>
+                  this.experienceService.getAllExperiences().subscribe()
+                );
+            }
+          });
+        } else {
+          const dialogRef = this.dialog.open(LoginDialogComponent, {
+            width: '400px',
+          });
+
+          dialogRef.afterClosed().subscribe((result) => {
+            if (result) {
+              console.log('User logged in successfully!');
+            } else {
+              console.log('Login canceled.');
+            }
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Error checking login status:', err);
+      });
   }
 
   handleExperienceCreated(newExperience: Experience): void {

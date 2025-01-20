@@ -17,6 +17,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ExperiencePopupComponent } from './components/experience-popup/experience-popup.component';
 import { HttpClientModule } from '@angular/common/http';
+import { AngularFireModule } from '@angular/fire/compat';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { environment } from './environment';
+import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 
 @NgModule({
   declarations: [
@@ -24,8 +28,11 @@ import { HttpClientModule } from '@angular/common/http';
     LeafletMapComponent,
     CreateExperienceModalComponent,
     ExperiencePopupComponent,
+    LoginDialogComponent,
   ],
   imports: [
+    AngularFireModule.initializeApp(environment.firebase),
+    AngularFireAuthModule,
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,

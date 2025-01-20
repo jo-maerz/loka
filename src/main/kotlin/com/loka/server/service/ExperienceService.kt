@@ -1,8 +1,9 @@
-package com.example.loka.server.service
+package com.loka.server.service
 
-import com.example.loka.server.entity.Experience
-import com.example.loka.server.repository.ExperienceRepository
+import com.loka.server.entity.Experience
+import com.loka.server.repository.ExperienceRepository
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class ExperienceService(private val repository: ExperienceRepository) {
@@ -11,17 +12,34 @@ class ExperienceService(private val repository: ExperienceRepository) {
 
     fun findById(id: Long): Experience = repository.findById(id).orElseThrow { RuntimeException("Experience not found") }
 
-    fun save(experience: Experience): Experience = repository.save(experience)
+    fun createExperience(experience: Experience): Experience {
+    val now = Instant.now().toString()
+    val experienceToSave = experience.copy(
+        createdAt = now,
+        updatedAt = now
+    )
+    return repository.save(experienceToSave)
+}
 
     fun update(id: Long, updatedExperience: Experience): Experience {
-        return repository.findById(id).map {
-            val newExperience = it.copy(
-                name = updatedExperience.name,
-                location = updatedExperience.location,
-                date = updatedExperience.date
-            )
-            repository.save(newExperience)
-        }.orElseThrow { RuntimeException("Experience not found") }
+        val existingExperience = repository.findById(id).orElseThrow {
+            RuntimeException("Experience not found")
+        }
+
+        val newExperience = existingExperience.copy(
+            name = updatedExperience.name,
+            startDateTime = updatedExperience.startDateTime,
+            endDateTime = updatedExperience.endDateTime,
+            address = updatedExperience.address,
+            position = updatedExperience.position,
+            description = updatedExperience.description,
+            hashtags = updatedExperience.hashtags,
+            category = updatedExperience.category,
+            pictures = updatedExperience.pictures,
+            updatedAt = Instant.now().toString() // Update the timestamp
+        )
+
+        return repository.save(newExperience)
     }
 
     fun delete(id: Long) {

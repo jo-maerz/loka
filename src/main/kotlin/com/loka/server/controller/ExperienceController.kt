@@ -1,7 +1,7 @@
-package com.example.loka.server.controller
+package com.loka.server.controller
 
-import com.example.loka.server.entity.Experience
-import com.example.loka.server.service.ExperienceService
+import com.loka.server.entity.Experience
+import com.loka.server.service.ExperienceService
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -12,7 +12,7 @@ class ExperienceController(private val service: ExperienceService) {
     fun getAllExperiences(): List<Experience> = service.findAll()
 
     @PostMapping
-    fun createExperience(@RequestBody experience: Experience): Experience = service.save(experience)
+    fun createExperience(@RequestBody experience: Experience): Experience = service.createExperience(experience)
 
     @GetMapping("/{id}")
     fun getExperienceById(@PathVariable id: Long): Experience = service.findById(id)

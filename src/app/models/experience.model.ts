@@ -4,10 +4,10 @@ export interface Position {
 }
 
 export interface Experience {
-  id: string;
+  id: number | null;
   name: string;
   startDateTime: string; // ISO string with date and time
-  endDateTime: string;   // ISO string with date and time
+  endDateTime: string; // ISO string with date and time
   address: string;
   position: Position;
   description: string;

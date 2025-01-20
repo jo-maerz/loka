@@ -1,37 +1,38 @@
-// src/app/services/experience.service.ts
-
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { Experience } from '../models/experience.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExperienceService {
-  private experiencesSubject: BehaviorSubject<Experience[]> =
-    new BehaviorSubject<Experience[]>([]);
-  public experiences$: Observable<Experience[]> =
-    this.experiencesSubject.asObservable();
+  private baseUrl = 'http://localhost:8080/api/experiences';
 
-  constructor() {}
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Retrieves the current list of experiences.
-   */
-  getExperiences(): Observable<Experience[]> {
-    return this.experiences$;
+  // Get all experiences
+  getAllExperiences(): Observable<Experience[]> {
+    return this.http.get<Experience[]>(this.baseUrl);
   }
 
-  /**
-   * Adds a new experience to the list.
-   * @param experience The experience to add.
-   */
-  addExperience(experience: Experience): void {
-    const currentExperiences = this.experiencesSubject.getValue();
-    this.experiencesSubject.next([...currentExperiences, experience]);
+  // Get a single experience by ID
+  getExperienceById(id: number): Observable<Experience> {
+    return this.http.get<Experience>(`${this.baseUrl}/${id}`);
   }
 
-  /**
-   * Optionally, implement methods to remove or update experiences.
-   */
+  // Create a new experience
+  createExperience(experience: Experience): Observable<Experience> {
+    return this.http.post<Experience>(this.baseUrl, experience);
+  }
+
+  // Update an existing experience
+  updateExperience(id: number, experience: Experience): Observable<Experience> {
+    return this.http.put<Experience>(`${this.baseUrl}/${id}`, experience);
+  }
+
+  // Delete an experience
+  deleteExperience(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
 }

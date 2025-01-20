@@ -22,7 +22,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   selectMarker: L.Marker | null = null;
 
   experience: Experience = {
-    id: '',
+    id: null,
     name: '',
     startDateTime: '',
     endDateTime: '',
@@ -183,9 +183,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     this.experience.startDateTime = startDateTime;
     this.experience.endDateTime = endDateTime;
 
-    // Assign a unique ID
-    this.experience.id = uuidv4();
-
     // Parse hashtags input into an array
     this.experience.hashtags = this.hashtagsInput
       .split(' ')
@@ -204,7 +201,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
   resetForm(): void {
     this.experience = {
-      id: '',
+      id: null,
       name: '',
       startDateTime: '',
       endDateTime: '',

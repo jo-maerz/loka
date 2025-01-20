@@ -51,12 +51,18 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.initMap();
     this.updateMarkers();
 
-    this.experiencesSubscription =
-      this.experienceService.experiences$.subscribe((data) => {
-        this.experiences = data;
-        // Remove existing markers before adding new ones
-        this.clearMarkers();
-        this.updateMarkers();
+    this.experiencesSubscription = this.experienceService
+      .getAllExperiences()
+      .subscribe({
+        next: (data) => {
+          this.experiences = data;
+          // Remove existing markers before adding new ones
+          this.clearMarkers();
+          this.updateMarkers();
+        },
+        error: (err) => {
+          console.log('Error fetching experiences: ' + err.message);
+        },
       });
   }
 
@@ -125,23 +131,25 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       width: '600px',
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().subscribe((result: Experience) => {
       if (result) {
-        this.experienceService.addExperience(result);
+        this.experienceService
+          .createExperience(result)
+          .subscribe(() =>
+            this.experienceService.getAllExperiences().subscribe()
+          );
       }
     });
   }
 
   handleExperienceCreated(newExperience: Experience): void {
-    this.experienceService.addExperience(newExperience);
+    this.experienceService.createExperience(newExperience);
   }
 
   addExperienceMarker(experience: Experience): void {
-    console.log('Adding experience', experience);
-    const marker = L.marker([
-      experience.position.lat,
-      experience.position.lng,
-    ]).addTo(this.map);
+    const { lat, lng } = experience.position;
+
+    const marker = L.marker([lat, lng]).addTo(this.map);
 
     // Attach a click event to open the ExperiencePopupComponent
     marker.on('click', () => {
@@ -158,52 +166,16 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   updateMarkers(): void {
-    if (!this.map) {
-      console.warn('Map is not initialized yet.');
-      return;
-    }
-
-    // Clear existing markers before updating
     this.clearMarkers();
 
-    // Define static markers based on selected date-time
-    const markersData: Record<
-      string,
-      { title: string; position: [number, number] }
-    > = {
-      [this.formatDate(new Date())]: {
-        title: 'Alte Oper Frankfurt',
-        position: [50.1155, 8.6724],
-      },
-      [this.formatDate(new Date(Date.now() + 86400000))]: {
-        title: 'Oper Frankfurt',
-        position: [50.1097, 8.6638],
-      },
-    };
+    const selectedTimestamp = this.selectedDateTime.getTime();
 
-    const selectedDateStr = this.formatDate(this.selectedDateTime);
-    const selectedMarker = markersData[selectedDateStr];
-    if (selectedMarker) {
-      const marker = L.marker(selectedMarker.position)
-        .addTo(this.map)
-        .bindPopup(selectedMarker.title)
-        .openPopup();
-      this.markers.push(marker);
-      this.map.setView(selectedMarker.position);
-      console.log('Added static marker:', selectedMarker.title);
-    } else {
-      console.log('No static events available for this date.');
-    }
+    this.experiences.forEach((experience) => {
+      const start = new Date(experience.startDateTime).getTime();
+      const end = new Date(experience.endDateTime).getTime();
 
-    // Add user-created experiences for the selected date-time
-    this.experiences.forEach((exp: Experience) => {
-      const selectedTimestamp = this.selectedDateTime.getTime();
-      const expStart = new Date(exp.startDateTime).getTime();
-      const expEnd = new Date(exp.endDateTime).getTime();
-
-      // Check if the selected date-time falls within the experience's range
-      if (selectedTimestamp >= expStart && selectedTimestamp <= expEnd) {
-        this.addExperienceMarker(exp);
+      if (selectedTimestamp >= start && selectedTimestamp <= end) {
+        this.addExperienceMarker(experience);
       }
     });
   }

@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as L from 'leaflet';
 import { Experience } from '../../models/experience.model';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,13 +37,37 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   };
 
   // Temporary variables to hold the selected date and time
-  startDate: Date | null = null;
+  startDate: string | null = null;
   startTime: string = '00:00';
-  endDate: Date | null = null;
+  endDate: string | null = null;
   endTime: string = '00:00';
   hashtagsInput: string = '';
 
-  constructor(public dialogRef: MatDialogRef<CreateExperienceModalComponent>) {}
+  constructor(
+    public dialogRef: MatDialogRef<CreateExperienceModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: Experience
+  ) {
+    if (data) {
+      // Populate experience fields for editing
+      this.experience = { ...this.data };
+
+      // Parse start and end date-times
+      if (this.experience.startDateTime) {
+        const start = new Date(this.experience.startDateTime);
+        this.startDate = start.toISOString().split('T')[0]; // Extract the date
+        this.startTime = start.toTimeString().split(':').slice(0, 2).join(':'); // Extract the time
+      }
+
+      if (this.experience.endDateTime) {
+        const end = new Date(this.experience.endDateTime);
+        this.endDate = end.toISOString().split('T')[0]; // Extract the date
+        this.endTime = end.toTimeString().split(':').slice(0, 2).join(':'); // Extract the time
+      }
+
+      // Populate hashtags
+      this.hashtagsInput = this.experience.hashtags?.join(' ') || '';
+    }
+  }
 
   ngOnInit(): void {
     this.initSelectMap();
@@ -200,26 +224,24 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   }
 
   resetForm(): void {
+    this.startDate = null;
+    this.startTime = '';
+    this.endDate = null;
+    this.endTime = '';
     this.experience = {
       id: null,
       name: '',
-      startDateTime: '',
-      endDateTime: '',
+      description: '',
       address: '',
       position: { lat: 0, lng: 0 },
-      description: '',
+      startDateTime: '',
+      endDateTime: '',
       hashtags: [],
       category: '',
       pictures: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: '',
+      updatedAt: '',
     };
     this.hashtagsInput = '';
-
-    // Remove marker from selectMap if exists
-    if (this.selectMarker) {
-      this.selectMap.removeLayer(this.selectMarker);
-      this.selectMarker = null;
-    }
   }
 }

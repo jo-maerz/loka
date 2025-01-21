@@ -1,19 +1,32 @@
 <div class="popup-content">
-  <h3>{{ experience.name }}</h3>
-  <p>{{ experience.description }}</p>
-  <p><strong>Category:</strong> {{ experience.category }}</p>
-  <p><strong>Dates:</strong> {{ formattedDateRange }}</p>
-
-  <div *ngIf="experience.pictures.length > 0" class="popup-images">
-    <img
-      *ngFor="let pic of experience.pictures"
-      [src]="pic"
-      alt="Experience Image"
-      class="popup-image"
-    />
+  <div class="popup-header">
+    <h3 class="popup-title">{{ experience.name }}</h3>
   </div>
 
-  <p *ngIf="experience.hashtags.length > 0">
-    <strong>Hashtags:</strong> {{ experience.hashtags.join(" ") }}
-  </p>
+  <div class="popup-body">
+    <p class="popup-description">{{ experience.description }}</p>
+    <p class="popup-address">
+      <strong>Address:</strong> {{ experience.address }}
+    </p>
+    <p *ngIf="experience.category.length > 0" class="popup-category">
+      <strong>Category:</strong> {{ experience.category }}
+    </p>
+    <p *ngIf="formattedDateRange" class="popup-dates">
+      <strong>Dates:</strong> {{ formattedDateRange }}
+    </p>
+
+    <div *ngIf="experience.pictures.length > 0" class="popup-images">
+      <div class="image-container" *ngFor="let pic of experience.pictures">
+        <img [src]="pic" alt="Experience Image" class="popup-image" />
+      </div>
+    </div>
+
+    <p *ngIf="experience.hashtags.length > 0" class="popup-hashtags">
+      <strong>Hashtags:</strong> {{ experience.hashtags.join(" ") }}
+    </p>
+  </div>
+  <div class="popup-actions">
+    <button mat-raised-button color="primary" (click)="openEditModal()">Edit</button>
+    <button mat-raised-button color="warn" (click)="deleteExperience()">Delete</button>
+  </div>
 </div>

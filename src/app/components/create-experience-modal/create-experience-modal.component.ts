@@ -28,7 +28,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     position: { lat: 0, lng: 0 },
     description: '',
     hashtags: [],
-    category: '',
+    category: undefined,
     pictures: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -43,30 +43,10 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   constructor(
     public dialogRef: MatDialogRef<CreateExperienceModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: Experience
-  ) {
-    if (data) {
-      // Populate experience fields for editing
-      this.experience = { ...this.data };
-
-      // Parse start / end date-times
-      if (this.experience.startDateTime) {
-        const start = new Date(this.experience.startDateTime);
-        this.startDate = start.toISOString().split('T')[0];
-        this.startTime = start.toTimeString().split(':').slice(0, 2).join(':');
-      }
-
-      if (this.experience.endDateTime) {
-        const end = new Date(this.experience.endDateTime);
-        this.endDate = end.toISOString().split('T')[0];
-        this.endTime = end.toTimeString().split(':').slice(0, 2).join(':');
-      }
-
-      // Populate hashtags
-      this.hashtagsInput = this.experience.hashtags?.join(' ') || '';
-    }
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.initializeForm();
     this.initSelectMap();
   }
 
@@ -75,7 +55,64 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       this.selectMap.remove();
     }
   }
+  initializeForm(): void {
+    const now = new Date();
+    if (this.isEditMode()) {
+      this.populateFormFields(this.data!);
+    } else {
+      this.setDefaultDateTime(now);
+    }
+  }
 
+  isEditMode(): boolean {
+    return this.data && this.data.id != null;
+  }
+
+  /**
+   * Populates form fields based on the provided experience data.
+   * @param data The experience data to populate the form with.
+   */
+  populateFormFields(data: Experience): void {
+    this.experience = { ...data };
+
+    if (this.experience.startDateTime) {
+      const start = new Date(this.experience.startDateTime);
+      this.startDate = this.formatDate(start);
+      this.startTime = this.formatTime(start);
+    }
+    if (this.experience.endDateTime) {
+      const end = new Date(this.experience.endDateTime);
+      this.endDate = this.formatDate(end);
+      this.endTime = this.formatTime(end);
+    }
+
+    this.hashtagsInput = this.experience.hashtags?.join(' ') || '';
+  }
+
+  /**
+   * Sets the default date and time to the current date and time.
+   * @param date The date to set as default.
+   */
+  private setDefaultDateTime(date: Date): void {
+    this.startDate = this.formatDate(date);
+    this.startTime = this.formatTime(date);
+  }
+
+  /**
+   * Formats a Date object to 'YYYY-MM-DD' string.
+   * @param date The date to format.
+   */
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  /**
+   * Formats a Date object to 'HH:MM' string.
+   * @param date The date to format.
+   */
+  private formatTime(date: Date): string {
+    return date.toTimeString().split(':').slice(0, 2).join(':');
+  }
   initSelectMap(): void {
     this.selectMap = L.map('selectMap').setView([50.1155, 8.6724], 14);
 
@@ -100,7 +137,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
   onSelectMapClick(event: L.LeafletMouseEvent): void {
     const { lat, lng } = event.latlng;
-    console.log('Selected location on selectMap:', lat, lng);
     this.addMarker(lat, lng);
   }
 
@@ -146,6 +182,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
           const lat = parseFloat(firstResult.lat);
           const lng = parseFloat(firstResult.lon);
           this.experience.position = { lat, lng };
+          this.experience.address = firstResult.display_name;
 
           this.selectMap.setView([lat, lng], 14);
           if (this.selectMarker) {
@@ -230,7 +267,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       startDateTime: '',
       endDateTime: '',
       hashtags: [],
-      category: '',
+      category: undefined,
       pictures: [],
       createdAt: '',
       updatedAt: '',

@@ -1,3 +1,10 @@
+export type Category =
+  | 'Food Festival'
+  | 'Art Installation'
+  | 'Concert'
+  | 'Outdoor Gathering'
+  | 'Flea Market';
+
 export interface Position {
   lat: number;
   lng: number;
@@ -12,7 +19,7 @@ export interface Experience {
   position: Position;
   description?: string;
   hashtags?: string[];
-  category?: string;
+  category?: Category;
   pictures?: string[];
   createdAt?: string;
   updatedAt?: string;

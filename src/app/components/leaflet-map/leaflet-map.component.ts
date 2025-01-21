@@ -85,7 +85,6 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   initMap(): void {
-
     this.map = L.map('map').setView([50.1155, 8.6724], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -161,6 +160,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     dialogRef.afterClosed().subscribe((newExp: Experience) => {
       if (newExp) {
+        console.log(newExp);
         this.experienceService.createExperience(newExp).subscribe({
           next: () => this.refreshMap(),
           error: (err) => console.error('Failed to create:', err),

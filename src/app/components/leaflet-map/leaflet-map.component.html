@@ -18,18 +18,39 @@
   <!-- Main map content -->
   <mat-sidenav-content>
     <div class="container-fluid d-flex flex-column vh-100">
-      <div class="row bg-light p-3">
-        <div class="col-12">
+      <!-- Top row with city dropdown and date picker -->
+      <div class="row bg-light px-2 pt-3">
+        <div class="col-6">
+          <!-- City Dropdown -->
           <mat-form-field appearance="fill" class="full-width">
-            <mat-label>Select Date and Time</mat-label>
+            <mat-label>Select City</mat-label>
+            <mat-select
+              [(value)]="selectedCity"
+              (selectionChange)="onCityChange($event.value)"
+            >
+              <mat-option *ngFor="let c of cities" [value]="c">
+                {{ c.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-6">
+          <!-- Date Picker -->
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Select Date</mat-label>
             <input
               matInput
-              type="datetime-local"
-              [(ngModel)]="selectedDateTimeLocal"
-              (change)="onDateTimeLocalChange()"
-              name="selectedDateTimeLocal"
+              [matDatepicker]="picker"
+              [(ngModel)]="selectedDate"
+              (dateChange)="onDateChange()"
               required
             />
+            <mat-datepicker-toggle
+              matSuffix
+              [for]="picker"
+            ></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
           </mat-form-field>
         </div>
       </div>
@@ -38,6 +59,8 @@
       <div class="row flex-grow-1">
         <div class="col-12 p-0 position-relative">
           <div id="map" class="map-container"></div>
+
+          <!-- Floating + Button -->
           <button
             mat-fab
             color="primary"
@@ -48,9 +71,6 @@
           </button>
         </div>
       </div>
-
-      <!-- (Optional) Dynamic Popup Host -->
-      <ng-template #popupHost></ng-template>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

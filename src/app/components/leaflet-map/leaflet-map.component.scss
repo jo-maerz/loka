@@ -18,3 +18,18 @@
   right: 20px;
   z-index: 1000;
 }
+
+.full-width {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 300px;
+  }
+
+  .add-button {
+    bottom: 10px;
+    right: 10px;
+  }
+}

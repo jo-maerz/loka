@@ -19,6 +19,7 @@ import { CreateExperienceModalComponent } from '../create-experience-modal/creat
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { CITIES } from '../../models/constants';
 
 @Component({
   selector: 'app-leaflet-map',
@@ -28,14 +29,19 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('drawer') drawer!: MatSidenav;
 
+  // The Leaflet map instance
   map!: L.Map;
 
+  // Experiences array
   experiences: Experience[] = [];
   experiencesSubscription!: Subscription;
 
-  // For date/time filtering example
-  selectedDateTime: Date = new Date();
-  selectedDateTimeLocal: string = this.formatDateTime(new Date());
+  // For date filtering
+  selectedDate: Date = new Date();
+
+  // City dropdown array + selected city
+  cities = CITIES;
+  selectedCity = this.cities[0]; // default to the first city, e.g., Frankfurt
 
   // Marker map: experience.id -> Leaflet Marker
   private markerMap = new Map<number, L.Marker>();
@@ -53,6 +59,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadLeafletIcons();
     this.initMap();
 
+    // Subscribe to experiences
     this.experiencesSubscription = this.experienceService
       .getAllExperiences()
       .subscribe({
@@ -75,6 +82,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // =============== MAP SETUP ===============
   loadLeafletIcons(): void {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -85,7 +93,11 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   initMap(): void {
-    this.map = L.map('map').setView([50.1155, 8.6724], 14);
+    // By default, center on the selectedCity coords
+    this.map = L.map('map').setView(
+      [this.selectedCity.lat, this.selectedCity.lng],
+      this.selectedCity.zoom
+    );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -97,26 +109,58 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // =================== DATE/TIME PICKER HANDLER ===================
-  onDateTimeLocalChange(): void {
-    if (this.selectedDateTimeLocal) {
-      this.selectedDateTime = new Date(this.selectedDateTimeLocal);
-      this.updateMarkers();
+  // =============== CITY DROPDOWN HANDLER ===============
+  onCityChange(city: {
+    name: string;
+    lat: number;
+    lng: number;
+    zoom: number;
+  }): void {
+    this.selectedCity = city;
+    // Re-center the map on the newly selected city
+    if (this.map) {
+      this.map.setView([city.lat, city.lng], city.zoom);
     }
   }
 
-  // =================== MARKER SYNC ===================
-  updateMarkers(): void {
-    const selectedTimestamp = this.selectedDateTime.getTime();
+  // =============== DATE HANDLER ===============
+  onDateChange(): void {
+    this.updateMarkers();
+  }
 
+  // =============== MARKER SYNC & SIDEBAR ===============
+  updateMarkers(): void {
+    // Extract the selected date (year, month, day)
+    const selectedYear = this.selectedDate.getFullYear();
+    const selectedMonth = this.selectedDate.getMonth();
+    const selectedDay = this.selectedDate.getDate();
+
+    // Filter experiences by selected date
     const visibleExperiences = this.experiences.filter((exp) => {
-      const start = new Date(exp.startDateTime!).getTime();
-      const end = new Date(exp.endDateTime!).getTime();
-      return selectedTimestamp >= start && selectedTimestamp <= end;
+      const expStart = new Date(exp.startDateTime!);
+      const expEnd = new Date(exp.endDateTime!);
+
+      // Check if the selected date is within the experience's date range
+      return (
+        (expStart.getFullYear() < selectedYear ||
+          (expStart.getFullYear() === selectedYear &&
+            expStart.getMonth() < selectedMonth) ||
+          (expStart.getFullYear() === selectedYear &&
+            expStart.getMonth() === selectedMonth &&
+            expStart.getDate() <= selectedDay)) &&
+        (expEnd.getFullYear() > selectedYear ||
+          (expEnd.getFullYear() === selectedYear &&
+            expEnd.getMonth() > selectedMonth) ||
+          (expEnd.getFullYear() === selectedYear &&
+            expEnd.getMonth() === selectedMonth &&
+            expEnd.getDate() >= selectedDay))
+      );
     });
 
+    // Convert visible experiences to a Set of IDs
     const visibleIds = new Set<number>(visibleExperiences.map((e) => e.id!));
 
+    // Remove markers that are no longer visible
     for (const [id, marker] of this.markerMap.entries()) {
       if (!visibleIds.has(id)) {
         marker.remove();
@@ -124,7 +168,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    // Add or update markers for experiences that are visible
+    // Add markers for new visible experiences
     for (const exp of visibleExperiences) {
       if (!this.markerMap.has(exp.id!)) {
         const newMarker = L.marker([
@@ -133,10 +177,8 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
         ]).addTo(this.map);
         newMarker.on('click', () => this.onMarkerClick(exp));
         this.markerMap.set(exp.id!, newMarker);
-      } else {
-        const existingMarker = this.markerMap.get(exp.id!)!;
-        existingMarker.setLatLng([exp.position!.lat, exp.position!.lng]);
       }
+      // If marker exists, no action needed since we already set its position
     }
   }
 
@@ -151,7 +193,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedExperience = undefined;
   }
 
-  // =================== CREATE EXPERIENCE DIALOG ===================
+  // =============== CREATE EXPERIENCE ===============
   openCreateModal(): void {
     const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
       width: '600px',
@@ -160,7 +202,6 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     dialogRef.afterClosed().subscribe((newExp: Experience) => {
       if (newExp) {
-        console.log(newExp);
         this.experienceService.createExperience(newExp).subscribe({
           next: () => this.refreshMap(),
           error: (err) => console.error('Failed to create:', err),
@@ -178,15 +219,5 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => console.error('Error refreshing experiences:', err),
     });
-  }
-
-  // =================== UTIL: FORMAT DATE/TIME ===================
-  formatDateTime(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const mins = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${mins}`;
   }
 }

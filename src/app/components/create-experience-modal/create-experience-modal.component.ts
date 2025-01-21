@@ -2,9 +2,7 @@ import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as L from 'leaflet';
 import { Experience } from '../../models/experience.model';
-import { v4 as uuidv4 } from 'uuid';
 
-// Fix Leaflet's default icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'assets/marker-icon-2x.png',
@@ -22,7 +20,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   selectMarker: L.Marker | null = null;
 
   experience: Experience = {
-    id: null,
+    id: undefined,
     name: '',
     startDateTime: '',
     endDateTime: '',
@@ -36,7 +34,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     updatedAt: new Date().toISOString(),
   };
 
-  // Temporary variables to hold the selected date and time
   startDate: string | null = null;
   startTime: string = '00:00';
   endDate: string | null = null;
@@ -51,17 +48,17 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       // Populate experience fields for editing
       this.experience = { ...this.data };
 
-      // Parse start and end date-times
+      // Parse start / end date-times
       if (this.experience.startDateTime) {
         const start = new Date(this.experience.startDateTime);
-        this.startDate = start.toISOString().split('T')[0]; // Extract the date
-        this.startTime = start.toTimeString().split(':').slice(0, 2).join(':'); // Extract the time
+        this.startDate = start.toISOString().split('T')[0];
+        this.startTime = start.toTimeString().split(':').slice(0, 2).join(':');
       }
 
       if (this.experience.endDateTime) {
         const end = new Date(this.experience.endDateTime);
-        this.endDate = end.toISOString().split('T')[0]; // Extract the date
-        this.endTime = end.toTimeString().split(':').slice(0, 2).join(':'); // Extract the time
+        this.endDate = end.toISOString().split('T')[0];
+        this.endTime = end.toTimeString().split(':').slice(0, 2).join(':');
       }
 
       // Populate hashtags
@@ -84,9 +81,19 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.selectMap);
+
+    if (
+      this.data?.position?.lat !== undefined &&
+      this.data?.position?.lng !== undefined
+    ) {
+      this.selectMap.setView(
+        [this.data.position.lat, this.data.position.lng],
+        14
+      );
+      this.addMarker(this.data.position.lat, this.data.position.lng);
+    }
 
     this.selectMap.on('click', this.onSelectMapClick.bind(this));
   }
@@ -102,7 +109,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       this.selectMap.removeLayer(this.selectMarker);
       this.selectMarker = null;
     }
-
     this.selectMarker = L.marker([lat, lng]).addTo(this.selectMap);
     this.experience.position = { lat, lng };
   }
@@ -117,7 +123,10 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {
         if (e.target && typeof e.target.result === 'string') {
-          if (this.experience.pictures.length < 10) {
+          if (
+            this.experience.pictures &&
+            this.experience.pictures.length < 10
+          ) {
             this.experience.pictures.push(e.target.result);
           }
         }
@@ -128,7 +137,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
   geocodeAddress(): void {
     if (!this.experience.address) return;
-
     const query = encodeURIComponent(this.experience.address);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
       .then((response) => response.json())
@@ -139,14 +147,11 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
           const lng = parseFloat(firstResult.lon);
           this.experience.position = { lat, lng };
 
-          // Move the selectMap to the geocoded location
-          if (this.selectMap) {
-            this.selectMap.setView([lat, lng], 14);
-            if (this.selectMarker) {
-              this.selectMap.removeLayer(this.selectMarker);
-            }
-            this.selectMarker = L.marker([lat, lng]).addTo(this.selectMap);
+          this.selectMap.setView([lat, lng], 14);
+          if (this.selectMarker) {
+            this.selectMap.removeLayer(this.selectMarker);
           }
+          this.selectMarker = L.marker([lat, lng]).addTo(this.selectMap);
         } else {
           alert('Address not found.');
         }
@@ -157,9 +162,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Combines the selected start date and time into an ISO string
-   */
   getCombinedStartDateTime(): string {
     if (!this.startDate) return '';
     const [hours, minutes] = this.startTime.split(':').map(Number);
@@ -168,9 +170,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     return combinedDate.toISOString();
   }
 
-  /**
-   * Combines the selected end date and time into an ISO string
-   */
   getCombinedEndDateTime(): string {
     if (!this.endDate) return '';
     const [hours, minutes] = this.endTime.split(':').map(Number);
@@ -178,17 +177,15 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     combinedDate.setHours(hours, minutes, 0, 0);
     return combinedDate.toISOString();
   }
-  /**
-   * Submits the experience to the parent component
-   */
+
   submitExperience(): void {
     // Validate required fields
     if (
       !this.experience.name ||
       !this.startDate ||
       !this.endDate ||
-      !this.experience.position.lat ||
-      !this.experience.position.lng
+      !this.experience.position?.lat ||
+      !this.experience.position?.lng
     ) {
       alert('Please fill in all required fields (Name, Date Range, Location).');
       return;
@@ -197,17 +194,14 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     // Ensure that end date-time is after start date-time
     const startDateTime = this.getCombinedStartDateTime();
     const endDateTime = this.getCombinedEndDateTime();
-
     if (new Date(endDateTime) <= new Date(startDateTime)) {
       alert('End date and time must be after start date and time.');
       return;
     }
 
-    // Assign formatted date-times to the experience
     this.experience.startDateTime = startDateTime;
     this.experience.endDateTime = endDateTime;
 
-    // Parse hashtags input into an array
     this.experience.hashtags = this.hashtagsInput
       .split(' ')
       .filter((tag) => tag.startsWith('#') && tag.length > 1);
@@ -217,7 +211,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     this.experience.createdAt = now;
     this.experience.updatedAt = now;
 
-    // Emit the experience data to the parent component
     this.dialogRef.close({ ...this.experience });
 
     this.resetForm();
@@ -225,11 +218,11 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
   resetForm(): void {
     this.startDate = null;
-    this.startTime = '';
+    this.startTime = '00:00';
     this.endDate = null;
-    this.endTime = '';
+    this.endTime = '00:00';
     this.experience = {
-      id: null,
+      id: undefined,
       name: '',
       description: '',
       address: '',

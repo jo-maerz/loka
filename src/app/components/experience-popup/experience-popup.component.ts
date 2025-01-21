@@ -5,6 +5,8 @@ import { CreateExperienceModalComponent } from '../create-experience-modal/creat
 import { MatDialog } from '@angular/material/dialog';
 import { LeafletMapComponent } from '../leaflet-map/leaflet-map.component';
 import L from 'leaflet';
+import { ConfirmDeleteModalComponent } from '../../confirm-delete-modal/confirm-delete-modal.component';
+import { DialogRef } from '@angular/cdk/dialog';
 
 @Component({
   selector: 'app-experience-popup',
@@ -13,6 +15,8 @@ import L from 'leaflet';
 })
 export class ExperiencePopupComponent implements OnInit {
   @Input() experience!: Experience;
+
+  deleteDialogRef!: any;
 
   constructor(
     private experienceService: ExperienceService,
@@ -26,8 +30,8 @@ export class ExperiencePopupComponent implements OnInit {
    * Formats the start and end date-times for display
    */
   get formattedDateRange(): string {
-    const start = new Date(this.experience.startDateTime);
-    const end = new Date(this.experience.endDateTime);
+    const start = new Date(this.experience.startDateTime!);
+    const end = new Date(this.experience.endDateTime!);
     return `${start.toLocaleString()} - ${end.toLocaleString()}`;
   }
   // Method to edit the experience
@@ -35,26 +39,37 @@ export class ExperiencePopupComponent implements OnInit {
     // Close the Leaflet popup
     const popup = L.DomUtil.get('leaflet-popup');
     if (popup) {
-      const map = this.leafletMapComponent.map; // Ensure you have access to the map instance
+      const map = this.leafletMapComponent.map;
       map.closePopup();
     }
 
-    this.leafletMapComponent.openModal(this.experience);
+    // this.leafletMapComponent.openCreateModal(this.experience);
   }
 
   // Method to delete the experience
-  deleteExperience(): void {
-    if (confirm('Are you sure you want to delete this experience?')) {
-      this.experienceService.deleteExperience(this.experience.id!!).subscribe({
-        next: () => {
-          alert('Experience deleted successfully!');
-          window.location.reload(); // Example for simplicity
-        },
-        error: (error) => {
-          alert('Failed to delete the experience.');
-          console.error(error);
-        },
-      });
-    }
+  openDeleteModal(): void {
+    this.deleteDialogRef = this.dialog.open(ConfirmDeleteModalComponent, {
+      width: '400px',
+      data: {
+        confirmMessage: 'Do you really want to delete this experience?',
+      },
+    });
+    this.deleteDialogRef.afterClosed().subscribe((confirmDelete: boolean) => {
+      if (!confirmDelete) return;
+      this.deleteExperience();
+    });
+  }
+
+  deleteExperience() {
+    this.experienceService.deleteExperience(this.experience.id!!).subscribe(
+      (result) => {
+        // success code ...
+        // remove this.deleteDialogRef.close();
+        // do your success handling here
+      },
+      (error) => {
+        // handle error
+      }
+    );
   }
 }

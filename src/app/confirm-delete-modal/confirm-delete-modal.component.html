@@ -1,0 +1,33 @@
+<mat-dialog-content class="dialog-content">
+  <!-- Header Section -->
+  <div class="header">
+    <h5>Confirm Deletion</h5>
+  </div>
+
+  <!-- Confirmation Message -->
+  <div class="confirmation-message">
+    <h2 class="text-center">{{ confirmMessage }}</h2>
+  </div>
+</mat-dialog-content>
+
+<!-- Fixed Footer -->
+<div class="fixed-footer">
+  <div class="button-group">
+    <button
+      mat-flat-button
+      color="warn"
+      class="save-button"
+      (click)="dialogRef.close(true)"
+    >
+      Yes, Confirm
+    </button>
+    <button
+      mat-flat-button
+      color="basic"
+      class="cancel-button"
+      (click)="dialogRef.close(false)"
+    >
+      No, Cancel
+    </button>
+  </div>
+</div>

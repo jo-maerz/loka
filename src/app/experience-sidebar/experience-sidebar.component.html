@@ -1,0 +1,56 @@
+<!-- Top toolbar with the name and a close button -->
+<mat-toolbar color="primary" class="sidebar-toolbar">
+  <span>{{ experience.name }}</span>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="closeSidebar.emit()">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<!-- The content area (scrollable) -->
+<div class="sidebar-content">
+  <!-- Description -->
+  <p *ngIf="experience?.description" class="content-paragraph">
+    {{ experience.description }}
+  </p>
+
+  <!-- Address -->
+  <p *ngIf="experience?.address" class="content-paragraph">
+    <strong>Address:</strong> {{ experience.address }}
+  </p>
+
+  <!-- Category -->
+  <p *ngIf="(experience?.category)!.length > 0" class="content-paragraph">
+    <strong>Category:</strong> {{ experience.category }}
+  </p>
+
+  <!-- Dates -->
+  <p *ngIf="formattedDateRange" class="content-paragraph">
+    <strong>Dates:</strong> {{ formattedDateRange }}
+  </p>
+
+  <!-- Pictures in a grid (or horizontally scrollable) -->
+  <div *ngIf="(experience?.pictures)!.length > 0" class="pictures-container">
+    <div class="picture-box" *ngFor="let pic of experience.pictures">
+      <img [src]="pic" alt="Experience Image" class="picture-img" />
+    </div>
+  </div>
+
+  <!-- Hashtags -->
+  <p
+    *ngIf="(experience?.hashtags)!.length > 0"
+    class="content-paragraph hashtags"
+  >
+    <strong>Hashtags:</strong> {{ experience.hashtags!.join(" ") }}
+  </p>
+</div>
+
+<!-- Footer with actions (edit/delete) pinned at the bottom -->
+<div class="sidebar-footer">
+  <button mat-raised-button color="primary" (click)="openEditModal()">
+    Edit
+  </button>
+  <button mat-raised-button color="warn" (click)="openDeleteModal()">
+    Delete
+  </button>
+</div>

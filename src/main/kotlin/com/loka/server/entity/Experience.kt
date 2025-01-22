@@ -7,13 +7,38 @@ data class Position(
     val lng: Double = 0.0
 )
 
+enum class Category(val displayName: String) {
+    FOOD_FESTIVAL("Food Festival"),
+    ART_INSTALLATION("Art Installation"),
+    CONCERT("Concert"),
+    OUTDOOR_GATHERING("Outdoor Gathering"),
+    FLEA_MARKET("Flea Market"),
+    EXHIBITION("Exhibition"),
+    WORKSHOP("Workshop"),
+    NETWORKING_EVENT("Networking Event"),
+    TECH_TALK("Tech Talk"),
+    OTHERS("Others");
+    
+   companion object {
+       private val map = values().associateBy(Category::displayName)
+
+       fun fromDisplayName(displayName: String): Category {
+           return map[displayName] ?: OTHERS
+       }
+
+       fun isValidCategory(displayName: String): Boolean {
+           return map.containsKey(displayName)
+       }
+   }
+}
+
 @Entity
 data class Experience(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    val name: String = "",
+    val name: String = "", 
 
     val startDateTime: String = "", // ISO string with date and time
 

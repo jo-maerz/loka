@@ -21,13 +21,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatGridListModule } from '@angular/material/grid-list';
 
 import { ExperiencePopupComponent } from './components/experience-popup/experience-popup.component';
-import { HttpClientModule } from '@angular/common/http';
-import { AngularFireModule } from '@angular/fire/compat';
-import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from './environment';
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 import { ConfirmDeleteModalComponent } from './confirm-delete-modal/confirm-delete-modal.component';
 import { ExperienceSidebarComponent } from './experience-sidebar/experience-sidebar.component';
+import { OAuthModule } from 'angular-oauth2-oidc';
+import { AuthInterceptor } from './services/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -40,8 +40,6 @@ import { ExperienceSidebarComponent } from './experience-sidebar/experience-side
     ExperienceSidebarComponent,
   ],
   imports: [
-    AngularFireModule.initializeApp(environment.firebase),
-    AngularFireAuthModule,
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
@@ -57,8 +55,16 @@ import { ExperienceSidebarComponent } from './experience-sidebar/experience-side
     MatSidenavModule,
     MatCardModule,
     MatGridListModule,
+    OAuthModule.forRoot({
+      resourceServer: {
+        allowedUrls: [environment.apiUrl],
+        sendAccessToken: true,
+      },
+    }),
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

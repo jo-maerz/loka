@@ -20,7 +20,7 @@
     <div class="container-fluid d-flex flex-column vh-100">
       <!-- Top row with city dropdown and date picker -->
       <div class="row bg-light px-2 pt-3">
-        <div class="col-6">
+        <div class="col-4">
           <!-- City Dropdown -->
           <mat-form-field appearance="fill" class="full-width">
             <mat-label>Select City</mat-label>
@@ -35,7 +35,7 @@
           </mat-form-field>
         </div>
 
-        <div class="col-6">
+        <div class="col-4">
           <!-- Date Picker -->
           <mat-form-field appearance="fill" class="full-width">
             <mat-label>Select Date</mat-label>
@@ -53,6 +53,23 @@
             <mat-datepicker #picker></mat-datepicker>
           </mat-form-field>
         </div>
+
+        <div class="col-4">
+          <button
+            mat-flat-button
+            (click)="openLoginModal()"
+            *ngIf="!authService.isLoggedIn"
+          >
+            Login
+          </button>
+          <button
+            mat-flat-button
+            (click)="logout()"
+            *ngIf="authService.isLoggedIn"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <!-- Map row -->
@@ -66,6 +83,7 @@
             color="primary"
             class="add-button"
             (click)="openCreateModal()"
+            *ngIf="authService.isLoggedIn"
           >
             <mat-icon>add</mat-icon>
           </button>

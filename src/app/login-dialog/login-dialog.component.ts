@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { AuthService } from '../services/auth.service';
 
-
 @Component({
   selector: 'app-login-dialog',
   templateUrl: './login-dialog.component.html',
@@ -17,15 +16,13 @@ export class LoginDialogComponent {
     private authService: AuthService
   ) {}
 
-  login(): void {
+  login() {
+    if (!this.email || !this.password) return;
     this.authService
       .login(this.email, this.password)
-      .then(() => {
-        this.dialogRef.close(true); // Close the dialog on success
-      })
+      .then(() => this.dialogRef.close())
       .catch((error) => {
         console.error('Login failed:', error);
-        alert('Login failed. Please try again.');
       });
   }
 }

@@ -20,6 +20,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { CITIES } from '../../models/constants';
+import { LoginDialogComponent } from '../../login-dialog/login-dialog.component';
 
 @Component({
   selector: 'app-leaflet-map',
@@ -52,7 +53,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private experienceService: ExperienceService,
     private dialog: MatDialog,
-    private authService: AuthService
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -96,7 +97,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     // By default, center on the selectedCity coords
     this.map = L.map('map').setView(
       [this.selectedCity.lat, this.selectedCity.lng],
-      13
+      16
     );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -110,22 +111,19 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // =============== CITY DROPDOWN HANDLER ===============
-  onCityChange(city: {
-    name: string;
-    lat: number;
-    lng: number;
-    zoom: number;
-  }): void {
+  onCityChange(city: { name: string; lat: number; lng: number }): void {
     this.selectedCity = city;
     // Re-center the map on the newly selected city
     if (this.map) {
-      this.map.setView([city.lat, city.lng], city.zoom);
+      this.map.setView([city.lat, city.lng], 16);
+      this.closeSidebar();
     }
   }
 
   // =============== DATE HANDLER ===============
   onDateChange(): void {
     this.updateMarkers();
+    this.closeSidebar();
   }
 
   // =============== MARKER SYNC & SIDEBAR ===============
@@ -219,5 +217,16 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => console.error('Error refreshing experiences:', err),
     });
+  }
+
+  openLoginModal() {
+    const dialogRef = this.dialog.open(LoginDialogComponent, {
+      width: '600px',
+      data: {},
+    });
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

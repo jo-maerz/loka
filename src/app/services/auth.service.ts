@@ -1,21 +1,48 @@
 import { Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { OAuthService } from 'angular-oauth2-oidc';
+import { environment } from '../environment';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private afAuth: AngularFireAuth) {}
-
-  login(email: string, password: string): Promise<any> {
-    return this.afAuth.signInWithEmailAndPassword(email, password);
+  constructor(private oauthService: OAuthService) {
+    this.configure();
   }
 
-  logout(): Promise<void> {
-    return this.afAuth.signOut();
+  private configure() {
+    this.oauthService.configure(environment.authConfig);
+    this.oauthService.loadDiscoveryDocumentAndTryLogin();
+    this.oauthService.setupAutomaticSilentRefresh();
   }
 
-  isLoggedIn(): Promise<boolean> {
-    return this.afAuth.authState.toPromise().then((user) => !!user);
+  login(email: string, password: string): Promise<void> {
+    return this.oauthService
+      .fetchTokenUsingPasswordFlow(email, password)
+      .then(() => {
+        // todo post-login logic
+      })
+      .catch((err) => {
+        console.error('Login error:', err);
+        throw err;
+      });
+  }
+  logout() {
+    const idToken = this.oauthService.getIdToken();
+    this.oauthService.logOut({
+      client_id: environment.authConfig.clientId,
+      post_logout_redirect_uri: environment.authConfig.redirectUri,
+      id_token_hint: idToken,
+    });
+  }
+
+  get accessToken() {
+    return this.oauthService.getAccessToken();
+  }
+
+  get isLoggedIn() {
+    return this.oauthService.hasValidAccessToken();
+  }
+
+  get userProfile() {
+    return this.oauthService.getIdentityClaims();
   }
 }

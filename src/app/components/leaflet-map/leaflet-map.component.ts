@@ -96,7 +96,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     // By default, center on the selectedCity coords
     this.map = L.map('map').setView(
       [this.selectedCity.lat, this.selectedCity.lng],
-      this.selectedCity.zoom
+      13
     );
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

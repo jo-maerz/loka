@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class LokaApplication
 
 fun main(args: Array<String>) {
-	runApplication<LokaApplication>(*args)
+    runApplication<LokaApplication>(*args)
 }

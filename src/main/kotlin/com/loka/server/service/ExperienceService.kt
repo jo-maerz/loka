@@ -4,13 +4,10 @@ import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.entity.Image
 import com.loka.server.repository.ExperienceRepository
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import java.time.Instant
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.multipart.MultipartFile
+import java.time.Instant
 
 @Service
 class ExperienceService(
@@ -18,34 +15,29 @@ class ExperienceService(
 ) {
     fun findAll(): List<Experience> = repository.findAll()
 
-    fun findById(id: Long): Experience = repository.findById(id)
-        .orElseThrow { RuntimeException("Experience not found") }
+    fun findById(id: Long): Experience =
+        repository.findById(id).orElseThrow { RuntimeException("Experience not found") }
 
+    @PreAuthorize("hasAuthority('VERIFIED')")
     fun create(dto: ExperienceDTO, files: List<MultipartFile>?): Experience {
-        val authentication = SecurityContextHolder.getContext().authentication
         val now = Instant.now().toString()
-        
-        // Verify user has VERIFIED role
-        if (authentication.authorities.none { it.authority == "VERIFIED" }) {
-            throw AccessDeniedException("Only verified users can create experiences")
-        }
 
         val experience = dto.toEntity().apply {
-            images = files?.map { it.toImageEntity() }?.toMutableList() ?: mutableListOf()
             createdAt = now
             updatedAt = now
+            images = files?.map { it.toImageEntity() }?.toMutableList() ?: mutableListOf()
+            createdBy = SecurityContextHolder.getContext().authentication.name;
         }
 
         return repository.save(experience)
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
+    @PreAuthorize("hasAuthority('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
     fun update(id: Long, dto: ExperienceDTO, files: List<MultipartFile>?): Experience {
-        val existingExperience = repository.findById(id)
+        val existing = repository.findById(id)
             .orElseThrow { RuntimeException("Experience not found") }
 
-        // Update fields
-       return existingExperience.apply {
+        return existing.apply {
             name = dto.name
             startDateTime = dto.startDateTime
             endDateTime = dto.endDateTime
@@ -59,10 +51,10 @@ class ExperienceService(
         }.let { repository.save(it) }
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
+    @PreAuthorize("hasAuthority('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
     fun delete(id: Long) {
-        if (repository.existsById(id)) repository.deleteById(id)
-        else throw RuntimeException("Experience not found")
+        if (!repository.existsById(id)) throw RuntimeException("Experience not found")
+        repository.deleteById(id)
     }
 
     private fun ExperienceDTO.toEntity() = Experience(
@@ -82,5 +74,4 @@ class ExperienceService(
         imageData = this.bytes,
         experience = null
     )
-
 }

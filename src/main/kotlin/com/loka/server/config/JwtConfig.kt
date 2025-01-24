@@ -21,9 +21,8 @@ class JwtConfig {
 class JwtGrantedAuthoritiesConverter : Converter<Jwt, Collection<GrantedAuthority>> {
     override fun convert(jwt: Jwt): Collection<GrantedAuthority> {
         val realmAccess = jwt.claims["realm_access"] as? Map<String, Any>
-        val roles = (realmAccess?.get("roles") as? List<String> ?: emptyList())
-            .map { it.removePrefix("ROLE_") } // Remove existing ROLE_ prefix
-            .map { SimpleGrantedAuthority("ROLE_$it") }
-        return roles
+        val roles = (realmAccess?.get("roles") as? List<String>) ?: emptyList()
+
+        return roles.map { SimpleGrantedAuthority(it) }
     }
 }

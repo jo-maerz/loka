@@ -59,7 +59,7 @@ class DataInitializer(private val experienceRepository: ExperienceRepository) : 
             description = "Description for experience $index in $city",
             hashtags = listOf("#fun", "#$city", "#event"),
             category = category,
-            pictures = listOf("https://example.com/image1.jpg", "https://example.com/image2.jpg"),
+            images = mutableListOf(),
             createdAt = LocalDateTime.now().format(formatter),
             updatedAt = LocalDateTime.now().format(formatter)
         )

@@ -1,5 +1,8 @@
 package com.loka.server.entity
 import jakarta.persistence.*
+import jakarta.persistence.*
+import jakarta.persistence.CollectionTable
+import jakarta.persistence.ElementCollection
 
 @Embeddable
 data class Position(
@@ -36,34 +39,32 @@ enum class Category(val displayName: String) {
 data class Experience(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    var id: Long? = null,
 
-    val name: String = "",
-    val startDateTime: String = "", // ISO string with date and time
-
-    val endDateTime: String = "", // ISO string with date and time
-    val address: String = "",
+    var name: String = "",
+    var startDateTime: String = "",
+    var endDateTime: String = "",
+    var address: String = "",
     
     @Embedded
-    val position: Position = Position(),
-
-    val description: String = "",
+    var position: Position = Position(),
+    
+    var description: String = "",
     
     @ElementCollection
     @CollectionTable(name = "experience_hashtags", joinColumns = [JoinColumn(name = "experience_id")])
-    @Column(name = "hashtag")
-    val hashtags: List<String> = emptyList(),
-
-    val category: String = "",
+    var hashtags: List<String> = emptyList(),
     
-    @ElementCollection
-    @CollectionTable(name = "experience_pictures", joinColumns = [JoinColumn(name = "experience_id")])
-    @Column(name = "picture")
-    val pictures: List<String> = emptyList(),
-
-    val createdAt: String = "",
-    val updatedAt: String = "",
+    var category: String = "",
     
-    @Column(name = "created_by")
-    val createdBy: String? = null
+    @OneToMany(
+        mappedBy = "experience",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var images: MutableList<Image> = mutableListOf(),
+
+    var createdAt: String = "",
+    var updatedAt: String = "",
+    var createdBy: String? = null
 )

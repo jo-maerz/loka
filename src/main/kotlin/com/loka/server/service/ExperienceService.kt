@@ -26,7 +26,7 @@ class ExperienceService(
         val now = Instant.now().toString()
         
         // Verify user has VERIFIED role
-        if (authentication.authorities.none { it.authority == "ROLE_VERIFIED" }) {
+        if (authentication.authorities.none { it.authority == "VERIFIED" }) {
             throw AccessDeniedException("Only verified users can create experiences")
         }
 
@@ -35,7 +35,7 @@ class ExperienceService(
             createdAt = now
             updatedAt = now
         }
-        
+
         return repository.save(experience)
     }
 

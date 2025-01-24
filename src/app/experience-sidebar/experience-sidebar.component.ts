@@ -20,6 +20,7 @@ export class ExperienceSidebarComponent implements OnInit {
    */
   @Output() refreshMap = new EventEmitter<void>();
   @Output() closeSidebar = new EventEmitter<void>();
+  selectedFiles: File[] = [];
 
   constructor(
     private experienceService: ExperienceService,
@@ -43,15 +44,23 @@ export class ExperienceSidebarComponent implements OnInit {
       data: { ...this.experience },
     });
 
-    dialogRef.afterClosed().subscribe((updated: Experience) => {
-      if (updated) {
-        this.experienceService
-          .updateExperience(updated.id!, updated)
-          .subscribe(() => {
-            this.refreshMap.emit();
-          });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: { experience: Experience; files: File[] }) => {
+        if (result) {
+          const { images, ...experienceWithoutImages } = result.experience;
+
+          this.experienceService
+            .updateExperience(
+              result.experience.id!,
+              experienceWithoutImages,
+              result.files
+            )
+            .subscribe(() => {
+              this.refreshMap.emit();
+            });
+        }
+      });
   }
 
   openDeleteModal(): void {
@@ -76,5 +85,9 @@ export class ExperienceSidebarComponent implements OnInit {
         this.refreshMap.emit();
         this.closeSidebar.emit();
       });
+  }
+
+  onFileSelect(event: any) {
+    this.selectedFiles = Array.from(event.target.files);
   }
 }

@@ -120,7 +120,7 @@
     </mat-form-field>
 
     <!-- Pictures -->
-    <div class="pictures-section">
+    <div class="images-section">
       <label for="experiencePictures" class="form-label"
         >Pictures (up to 10)</label
       >
@@ -132,14 +132,10 @@
         multiple
         accept="image/*"
       />
-      <div class="pictures-preview">
-        <div
-          *ngFor="let pic of experience.pictures; let i = index"
-          class="picture-item"
-        >
-          <img [src]="pic" alt="Picture" class="img-thumbnail" width="100" />
-        </div>
+      <div class="image-preview" *ngFor="let img of experience.images">
+        <img [src]="img.preview" alt="Preview" style="max-width: 100px" />
       </div>
+      <input type="file" multiple (change)="handleFileUpload($event)" />
     </div>
   </form>
 </div>

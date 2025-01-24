@@ -29,10 +29,10 @@
     <strong>Dates:</strong> {{ formattedDateRange }}
   </p>
 
-  <!-- Pictures in a grid (or horizontally scrollable) -->
-  <div *ngIf="(experience?.pictures)!.length > 0" class="pictures-container">
-    <div class="picture-box" *ngFor="let pic of experience.pictures">
-      <img [src]="pic" alt="Experience Image" class="picture-img" />
+  <!-- Images in a grid (or horizontally scrollable) -->
+  <div *ngIf="(experience?.images)!.length > 0" class="images-container">
+    <div class="image-box" *ngFor="let pic of experience.images">
+      <img [src]="pic" alt="Experience Image" class="image-img" />
     </div>
   </div>
 

@@ -15,8 +15,8 @@
       <strong>Dates:</strong> {{ formattedDateRange }}
     </p>
 
-    <div *ngIf="experience!.pictures!.length > 0" class="popup-images">
-      <div class="image-container" *ngFor="let pic of experience.pictures">
+    <div *ngIf="experience!.images!.length > 0" class="popup-images">
+      <div class="image-container" *ngFor="let pic of experience.images">
         <img [src]="pic" alt="Experience Image" class="popup-image" />
       </div>
     </div>

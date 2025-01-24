@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as L from 'leaflet';
-import { Experience } from '../../models/experience.model';
+import { Experience, ExperienceImage } from '../../models/experience.model';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -29,9 +29,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     description: '',
     hashtags: [],
     category: undefined,
-    pictures: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    images: [],
   };
 
   startDate: string | null = null;
@@ -154,21 +152,16 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     const files = target.files;
     if (!files) return;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e: ProgressEvent<FileReader>) => {
-        if (e.target && typeof e.target.result === 'string') {
-          if (
-            this.experience.pictures &&
-            this.experience.pictures.length < 10
-          ) {
-            this.experience.pictures.push(e.target.result);
-          }
-        }
+        this.experience.images?.push({
+          preview: e.target?.result?.toString(), // Base64 preview
+          file: file, // File object
+        });
       };
       reader.readAsDataURL(file);
-    }
+    });
   }
 
   geocodeAddress(): void {
@@ -243,12 +236,11 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       .split(' ')
       .filter((tag) => tag.startsWith('#') && tag.length > 1);
 
-    // Update timestamps
-    const now = new Date().toISOString();
-    this.experience.createdAt = now;
-    this.experience.updatedAt = now;
-
-    this.dialogRef.close({ ...this.experience });
+    const filesToUpload = this.experience.images?.map((img) => img.file);
+    this.dialogRef.close({
+      experience: this.experience,
+      files: filesToUpload,
+    });
 
     this.resetForm();
   }
@@ -268,9 +260,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       endDateTime: '',
       hashtags: [],
       category: undefined,
-      pictures: [],
-      createdAt: '',
-      updatedAt: '',
+      images: [],
     };
     this.hashtagsInput = '';
   }

@@ -198,14 +198,20 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       data: {},
     });
 
-    dialogRef.afterClosed().subscribe((newExp: Experience) => {
-      if (newExp) {
-        this.experienceService.createExperience(newExp).subscribe({
-          next: () => this.refreshMap(),
-          error: (err) => console.error('Failed to create:', err),
-        });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: { experience: Experience; files: File[] }) => {
+        if (result) {
+          const { images, ...experienceWithoutImages } = result.experience;
+
+          this.experienceService
+            .createExperience(experienceWithoutImages, result.files)
+            .subscribe({
+              next: () => this.refreshMap(),
+              error: (err) => console.error('Failed to create:', err),
+            });
+        }
+      });
   }
 
   // Called after editing/deleting from the sidebar => refresh the experiences

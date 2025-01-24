@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Experience } from '../models/experience.model';
+import { ImageConverterService } from './image-converter.service';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +11,10 @@ import { Experience } from '../models/experience.model';
 export class ExperienceService {
   private baseUrl = 'http://localhost:8080/api/experiences';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private imageConverter: ImageConverterService
+  ) {}
 
   // Get all experiences
   getAllExperiences(): Observable<Experience[]> {
@@ -18,17 +23,52 @@ export class ExperienceService {
 
   // Get a single experience by ID
   getExperienceById(id: number): Observable<Experience> {
-    return this.http.get<Experience>(`${this.baseUrl}/${id}`);
+    return this.http
+      .get<Experience>(`${this.baseUrl}/${id}`)
+      .pipe(map((exp: Experience) => this.imageConverter.convertImages(exp)));
   }
 
   // Create a new experience
-  createExperience(experience: Experience): Observable<Experience> {
-    return this.http.post<Experience>(this.baseUrl, experience);
+  createExperience(
+    experience: Experience,
+    files: File[]
+  ): Observable<Experience> {
+    const formData = new FormData();
+    if (!experience) {
+      throw new Error('Experience object is undefined');
+    }
+    
+    formData.append('experience', JSON.stringify(experience));
+
+    files.forEach((file) => {
+      formData.append('images', file, file.name);
+    });
+
+    return this.http.post<Experience>(this.baseUrl, formData);
   }
 
   // Update an existing experience
-  updateExperience(id: number, experience: Experience): Observable<Experience> {
-    return this.http.put<Experience>(`${this.baseUrl}/${id}`, experience);
+  updateExperience(
+    id: number,
+    experience: Experience,
+    files: File[]
+  ): Observable<Experience> {
+    const formData = new FormData();
+    if (!experience) {
+      throw new Error('Experience object is undefined');
+    }
+    
+    formData.append('experience', JSON.stringify(experience));
+
+    files.forEach((file) => {
+      formData.append('images', file, file.name);
+    });
+
+    return this.http.put<Experience>(`${this.baseUrl}/${id}`, formData, {
+      headers: new HttpHeaders({
+        Accept: 'application/json',
+      }),
+    });
   }
 
   // Delete an experience

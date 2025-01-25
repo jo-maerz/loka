@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AuthService } from '../services/auth.service';
+import { SignUpDialogComponent } from '../sign-up-dialog/sign-up-dialog.component';
 
 @Component({
   selector: 'app-login-dialog',
@@ -13,7 +14,8 @@ export class LoginDialogComponent {
 
   constructor(
     private dialogRef: MatDialogRef<LoginDialogComponent>,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog
   ) {}
 
   login() {
@@ -24,5 +26,11 @@ export class LoginDialogComponent {
       .catch((error) => {
         console.error('Login failed:', error);
       });
+  }
+
+  openSignUp(event: Event) {
+    event.preventDefault();
+    this.dialogRef.close();
+    this.dialog.open(SignUpDialogComponent);
   }
 }

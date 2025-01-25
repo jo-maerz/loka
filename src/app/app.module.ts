@@ -28,6 +28,7 @@ import { ConfirmDeleteModalComponent } from './confirm-delete-modal/confirm-dele
 import { ExperienceSidebarComponent } from './experience-sidebar/experience-sidebar.component';
 import { OAuthModule } from 'angular-oauth2-oidc';
 import { AuthInterceptor } from './services/auth.interceptor';
+import { SignUpDialogComponent } from './sign-up-dialog/sign-up-dialog.component';
 
 @NgModule({
   declarations: [
@@ -38,6 +39,7 @@ import { AuthInterceptor } from './services/auth.interceptor';
     LoginDialogComponent,
     ConfirmDeleteModalComponent,
     ExperienceSidebarComponent,
+    SignUpDialogComponent,
   ],
   imports: [
     BrowserModule,

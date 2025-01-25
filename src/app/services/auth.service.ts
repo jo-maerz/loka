@@ -1,10 +1,20 @@
+// auth.service.ts
 import { Injectable } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { environment } from '../environment';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export interface SignUpRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private oauthService: OAuthService) {
+  constructor(private oauthService: OAuthService, private http: HttpClient) {
     this.configure();
   }
 
@@ -25,6 +35,12 @@ export class AuthService {
         throw err;
       });
   }
+
+  signUp(signUpData: SignUpRequest): Observable<any> {
+    // No need to attach Authorization headers; handled by interceptor
+    return this.http.post(`${environment.apiUrl}/auth/signup`, signUpData);
+  }
+
   logout() {
     const idToken = this.oauthService.getIdToken();
     this.oauthService.logOut({

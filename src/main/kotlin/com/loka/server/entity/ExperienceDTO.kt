@@ -1,5 +1,4 @@
 package com.loka.server.entity
-import org.springframework.web.multipart.MultipartFile
 
 data class ExperienceDTO(
     val name: String,
@@ -9,5 +8,5 @@ data class ExperienceDTO(
     val position: Position,
     val description: String?,
     val hashtags: List<String>?,
-    val category: String?
+    val category: String
 )

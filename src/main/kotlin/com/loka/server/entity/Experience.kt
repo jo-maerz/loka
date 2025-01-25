@@ -1,8 +1,6 @@
 package com.loka.server.entity
+
 import jakarta.persistence.*
-import jakarta.persistence.*
-import jakarta.persistence.CollectionTable
-import jakarta.persistence.ElementCollection
 
 @Embeddable
 data class Position(
@@ -21,18 +19,18 @@ enum class Category(val displayName: String) {
     NETWORKING_EVENT("Networking Event"),
     TECH_TALK("Tech Talk"),
     OTHERS("Others");
-    
-   companion object {
-       private val map = values().associateBy(Category::displayName)
 
-       fun fromDisplayName(displayName: String): Category {
-           return map[displayName] ?: OTHERS
-       }
+    companion object {
+        private val map = values().associateBy(Category::displayName)
 
-       fun isValidCategory(displayName: String): Boolean {
-           return map.containsKey(displayName)
-       }
-   }
+        fun fromDisplayName(displayName: String): Category {
+            return map[displayName] ?: OTHERS
+        }
+
+        fun isValidCategory(displayName: String): Boolean {
+            return map.containsKey(displayName)
+        }
+    }
 }
 
 @Entity
@@ -45,18 +43,18 @@ data class Experience(
     var startDateTime: String = "",
     var endDateTime: String = "",
     var address: String = "",
-    
+
     @Embedded
     var position: Position = Position(),
-    
+
     var description: String = "",
-    
+
     @ElementCollection
     @CollectionTable(name = "experience_hashtags", joinColumns = [JoinColumn(name = "experience_id")])
     var hashtags: List<String> = emptyList(),
-    
+
     var category: String = "",
-    
+
     @OneToMany(
         mappedBy = "experience",
         cascade = [CascadeType.ALL],

@@ -1,21 +1,20 @@
 package com.loka.server.entity
+
 import jakarta.persistence.*
 
 @Entity
-class Image(
-
+data class Image(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null,
 
-    var name: String = "",
-
-    var type: String = "",
+    val fileName: String = "",
 
     @Lob
-    var imageData: ByteArray = byteArrayOf(),
+    @Column(columnDefinition = "bytea")
+    val data: ByteArray = ByteArray(0),
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "experience_id")
-    var experience: Experience? = null
+    val experience: Experience? = null
 )

@@ -1,3 +1,4 @@
+// JwtConfig.kt
 package com.loka.server.config
 
 import org.springframework.context.annotation.Bean
@@ -23,6 +24,7 @@ class JwtGrantedAuthoritiesConverter : Converter<Jwt, Collection<GrantedAuthorit
         val realmAccess = jwt.claims["realm_access"] as? Map<String, Any>
         val roles = (realmAccess?.get("roles") as? List<String>) ?: emptyList()
 
+        // Do not prefix roles with "ROLE_"
         return roles.map { SimpleGrantedAuthority(it) }
     }
 }

@@ -4,74 +4,90 @@ import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.entity.Image
 import com.loka.server.repository.ExperienceRepository
+import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.multipart.MultipartFile
+import org.slf4j.LoggerFactory
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 @Service
 class ExperienceService(
     private val repository: ExperienceRepository
 ) {
-    fun findAll(): List<Experience> = repository.findAll()
 
-    fun findById(id: Long): Experience =
-        repository.findById(id).orElseThrow { RuntimeException("Experience not found") }
+    private val logger = LoggerFactory.getLogger(ExperienceService::class.java)
 
-    @PreAuthorize("hasAuthority('VERIFIED')")
-    fun create(dto: ExperienceDTO, files: List<MultipartFile>?): Experience {
-        val now = Instant.now().toString()
+    fun findAll(): List<Experience> {
+        return repository.findAll()
+    }
 
-        val experience = dto.toEntity().apply {
-            createdAt = now
-            updatedAt = now
-            images = files?.map { it.toImageEntity() }?.toMutableList() ?: mutableListOf()
-            createdBy = SecurityContextHolder.getContext().authentication.name;
+    fun findById(id: Long): Experience? {
+        return repository.findById(id).orElse(null)
+    }
+
+    @Transactional
+    fun create(dto: ExperienceDTO, images: List<MultipartFile>?, authentication: Authentication): Experience {
+        val currentTimestamp = Instant.now().toString() // Convert Instant to String
+        val experience = Experience(
+            name = dto.name,
+            startDateTime = dto.startDateTime,
+            endDateTime = dto.endDateTime,
+            address = dto.address,
+            position = dto.position,
+            description = dto.description ?: "",
+            hashtags = dto.hashtags ?: listOf(),
+            category = dto.category,
+            createdAt = currentTimestamp,
+            updatedAt = currentTimestamp,
+            createdBy = authentication.name
+        )
+        // Handle image storage if necessary
+        images?.forEach { image ->
+            try {
+                val img = Image(fileName = image.originalFilename ?: "unknown", data = image.bytes, experience = experience)
+                experience.images.add(img)
+            } catch (ex: Exception) {
+                logger.error("Error processing image: ", ex)
+                // Handle exception as needed
+            }
         }
-
         return repository.save(experience)
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
-    fun update(id: Long, dto: ExperienceDTO, files: List<MultipartFile>?): Experience {
-        val existing = repository.findById(id)
-            .orElseThrow { RuntimeException("Experience not found") }
-
-        return existing.apply {
-            name = dto.name
-            startDateTime = dto.startDateTime
-            endDateTime = dto.endDateTime
-            address = dto.address
-            position = dto.position
-            description = dto.description ?: ""
-            hashtags = dto.hashtags ?: listOf()
-            category = dto.category ?: ""
-            updatedAt = Instant.now().toString()
-            images = files?.map { it.toImageEntity() }?.toMutableList() ?: mutableListOf()
-        }.let { repository.save(it) }
+    @Transactional
+    fun update(id: Long, dto: ExperienceDTO, images: List<MultipartFile>?, authentication: Authentication): Experience? {
+        val existing = repository.findById(id).orElse(null) ?: return null
+        // Update fields
+        existing.id = id
+        existing.name = dto.name
+        existing.startDateTime = dto.startDateTime
+        existing.endDateTime = dto.endDateTime
+        existing.address = dto.address
+        existing.position = dto.position
+        existing.description = dto.description ?: ""
+        existing.hashtags = dto.hashtags ?: listOf()
+        existing.updatedAt = Instant.now().toString() // Convert Instant to String
+        // Handle image updates if necessary
+        images?.forEach { image ->
+            try {
+                val img = Image(fileName = image.originalFilename ?: "unknown", data = image.bytes, experience = existing)
+                existing.images.add(img)
+            } catch (ex: Exception) {
+                logger.error("Error processing image: ", ex)
+                // Handle exception as needed
+            }
+        }
+        return repository.save(existing)
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or @experienceSecurity.isOwner(#id, authentication)")
-    fun delete(id: Long) {
-        if (!repository.existsById(id)) throw RuntimeException("Experience not found")
-        repository.deleteById(id)
+    @Transactional
+    fun delete(id: Long): Boolean {
+        return if (repository.existsById(id)) {
+            repository.deleteById(id)
+            true
+        } else {
+            false
+        }
     }
-
-    private fun ExperienceDTO.toEntity() = Experience(
-        name = this.name,
-        startDateTime = this.startDateTime,
-        endDateTime = this.endDateTime,
-        address = this.address,
-        position = this.position,
-        description = this.description ?: "",
-        hashtags = this.hashtags ?: listOf(),
-        category = this.category ?: ""
-    )
-
-    private fun MultipartFile.toImageEntity() = Image(
-        name = this.originalFilename ?: "unnamed",
-        type = this.contentType ?: "application/octet-stream",
-        imageData = this.bytes,
-        experience = null
-    )
 }

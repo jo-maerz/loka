@@ -5,7 +5,7 @@ import { LeafletMapComponent } from './components/leaflet-map/leaflet-map.compon
 import { CreateExperienceModalComponent } from './components/create-experience-modal/create-experience-modal.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Angular Material Modules
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -18,6 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatGridListModule } from '@angular/material/grid-list';
 
 import { ExperiencePopupComponent } from './components/experience-popup/experience-popup.component';
@@ -56,7 +57,9 @@ import { SignUpDialogComponent } from './sign-up-dialog/sign-up-dialog.component
     MatToolbarModule,
     MatSidenavModule,
     MatCardModule,
+    MatProgressSpinnerModule,
     MatGridListModule,
+    ReactiveFormsModule,
     OAuthModule.forRoot({
       resourceServer: {
         allowedUrls: [environment.apiUrl],

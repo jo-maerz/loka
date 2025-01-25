@@ -1,4 +1,3 @@
-/* Set the dialog content to take available space and be scrollable */
 .dialog-content {
   max-height: 60vh; /* Adjust as needed */
   overflow-y: auto;
@@ -23,14 +22,14 @@
 }
 
 /* Pictures preview */
-.images-preview {
+.image-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
 
-.picture-item img {
+.image-preview img {
   width: 100px;
   height: auto;
   object-fit: cover;
@@ -44,23 +43,23 @@
   padding: 16px 20px;
   position: sticky;
   bottom: 0;
-}
-.full-width {
-  width: 100%;
+  background: white;
 }
 
-.selected-dates {
-  margin-top: 16px;
+.address-loading-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.selected-dates ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.selected-dates li {
+.date-time-group {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.date-field,
+.time-field {
+  flex: 1;
 }

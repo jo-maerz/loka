@@ -1,81 +1,111 @@
 <h1 mat-dialog-title>Create an Experience</h1>
 <div mat-dialog-content class="dialog-content">
-  <form>
+  <form [formGroup]="experienceForm">
     <!-- Experience Name -->
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Experience Name</mat-label>
-      <input matInput [(ngModel)]="experience.name" name="name" required />
+      <input
+        matInput
+        formControlName="name"
+        required
+        placeholder="Enter experience name"
+      />
+      <mat-error *ngIf="experienceForm.get('name')?.hasError('required')">
+        Experience Name is required
+      </mat-error>
     </mat-form-field>
 
-    <!-- Date Picker -->
-    <div class="date-time-group">
+    <!-- Start Date Picker -->
+    <div formGroupName="startDateTime" class="date-time-group">
       <mat-form-field appearance="fill" class="date-field">
         <mat-label>Start Date</mat-label>
         <input
           matInput
           [matDatepicker]="startPicker"
-          [(ngModel)]="startDate"
-          name="startDate"
+          formControlName="date"
           required
+          placeholder="Select start date"
         />
         <mat-datepicker-toggle
           matSuffix
           [for]="startPicker"
         ></mat-datepicker-toggle>
         <mat-datepicker #startPicker></mat-datepicker>
+        <mat-error
+          *ngIf="experienceForm.get('startDateTime.date')?.hasError('required')"
+        >
+          Start Date is required
+        </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="time-field">
         <mat-label>Start Time</mat-label>
-        <input
-          matInput
-          type="time"
-          [(ngModel)]="startTime"
-          name="startTime"
-          required
-        />
+        <input matInput type="time" formControlName="time" required />
+        <mat-error
+          *ngIf="experienceForm.get('startDateTime.time')?.hasError('required')"
+        >
+          Start Time is required
+        </mat-error>
       </mat-form-field>
     </div>
 
-    <div class="date-time-group">
+    <!-- End Date Picker -->
+    <div formGroupName="endDateTime" class="date-time-group">
       <mat-form-field appearance="fill" class="date-field">
         <mat-label>End Date</mat-label>
         <input
           matInput
           [matDatepicker]="endPicker"
-          [(ngModel)]="endDate"
-          name="endDate"
+          formControlName="date"
           required
+          placeholder="Select end date"
         />
         <mat-datepicker-toggle
           matSuffix
           [for]="endPicker"
         ></mat-datepicker-toggle>
         <mat-datepicker #endPicker></mat-datepicker>
+        <mat-error
+          *ngIf="experienceForm.get('endDateTime.date')?.hasError('required')"
+        >
+          End Date is required
+        </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="time-field">
         <mat-label>End Time</mat-label>
-        <input
-          matInput
-          type="time"
-          [(ngModel)]="endTime"
-          name="endTime"
-          required
-        />
+        <input matInput type="time" formControlName="time" required />
+        <mat-error
+          *ngIf="experienceForm.get('endDateTime.time')?.hasError('required')"
+        >
+          End Time is required
+        </mat-error>
       </mat-form-field>
     </div>
 
     <!-- Address Input -->
-    <mat-form-field appearance="fill" class="full-width">
+    <mat-form-field
+      appearance="fill"
+      class="full-width"
+      style="position: relative"
+    >
       <mat-label>Address</mat-label>
       <input
         matInput
-        [(ngModel)]="experience.address"
-        name="address"
-        (blur)="geocodeAddress()"
-        required
+        formControlName="address"
+        placeholder="Enter address"
+        autocomplete="off"
       />
+      <!-- Loading Spinner inside the Form Field -->
+      <mat-progress-spinner
+        *ngIf="loading"
+        mode="indeterminate"
+        diameter="20"
+        class="address-loading-spinner"
+      ></mat-progress-spinner>
+      <mat-error *ngIf="experienceForm.get('address')?.hasError('required')">
+        Address is required
+      </mat-error>
     </mat-form-field>
 
     <!-- Map for Picking Location -->
@@ -89,27 +119,22 @@
       <mat-label>Description</mat-label>
       <textarea
         matInput
-        [(ngModel)]="experience.description"
-        name="description"
+        formControlName="description"
         rows="2"
+        placeholder="Enter description"
       ></textarea>
     </mat-form-field>
 
     <!-- Hashtags -->
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Hashtags</mat-label>
-      <input
-        matInput
-        [(ngModel)]="hashtagsInput"
-        name="hashtagsInput"
-        placeholder="#fun #music"
-      />
+      <input matInput formControlName="hashtags" placeholder="#fun #music" />
     </mat-form-field>
 
     <!-- Category -->
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Category</mat-label>
-      <mat-select [(ngModel)]="experience.category" name="category" required>
+      <mat-select formControlName="category" required>
         <mat-option value="" disabled>Select a category</mat-option>
         <mat-option value="Food Festival">Food Festival</mat-option>
         <mat-option value="Art Installation">Art Installation</mat-option>
@@ -117,6 +142,9 @@
         <mat-option value="Outdoor Gathering">Outdoor Gathering</mat-option>
         <mat-option value="Flea Market">Flea Market</mat-option>
       </mat-select>
+      <mat-error *ngIf="experienceForm.get('category')?.hasError('required')">
+        Category is required
+      </mat-error>
     </mat-form-field>
 
     <!-- Pictures -->
@@ -132,15 +160,22 @@
         multiple
         accept="image/*"
       />
-      <div class="image-preview" *ngFor="let img of experience.images">
+      <div
+        class="image-preview"
+        *ngFor="let img of experienceForm.get('images')?.value"
+      >
         <img [src]="img.preview" alt="Preview" style="max-width: 100px" />
       </div>
-      <input type="file" multiple (change)="handleFileUpload($event)" />
     </div>
   </form>
 </div>
 <div mat-dialog-actions class="dialog-actions">
-  <button mat-raised-button color="primary" (click)="submitExperience()">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submitExperience()"
+    [disabled]="experienceForm.invalid || loading"
+  >
     Save Experience
   </button>
   <button mat-raised-button color="secondary" (click)="dialogRef.close()">

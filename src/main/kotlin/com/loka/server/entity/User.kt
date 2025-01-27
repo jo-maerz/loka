@@ -1,6 +1,6 @@
-// User.kt
 package com.loka.server.entity
 
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import jakarta.persistence.*
 
 @Entity
@@ -20,5 +20,13 @@ data class User(
     var firstName: String = "",
 
     @Column(name = "last_name", nullable = false)
-    var lastName: String = ""
+    var lastName: String = "",
+
+    @OneToMany(
+        mappedBy = "user",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    @JsonManagedReference
+    var reviews: MutableList<Review> = mutableListOf()
 )

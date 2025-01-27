@@ -1,6 +1,7 @@
 package com.loka.server.entity
 
 import jakarta.persistence.*
+import com.fasterxml.jackson.annotation.JsonManagedReference
 
 @Embeddable
 data class Position(
@@ -60,6 +61,7 @@ data class Experience(
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
+    @JsonManagedReference
     var images: MutableList<Image> = mutableListOf(),
 
     var createdAt: String = "",

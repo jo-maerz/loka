@@ -4,6 +4,7 @@ import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.entity.Image
 import com.loka.server.repository.ExperienceRepository
+import com.loka.server.repository.ImageRepository
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -13,7 +14,8 @@ import java.time.Instant
 
 @Service
 class ExperienceService(
-    private val repository: ExperienceRepository
+    private val repository: ExperienceRepository,
+    private val imageRepository: ImageRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(ExperienceService::class.java)
@@ -68,16 +70,17 @@ class ExperienceService(
         existing.description = dto.description ?: ""
         existing.hashtags = dto.hashtags ?: listOf()
         existing.updatedAt = Instant.now().toString() // Convert Instant to String
-        // Handle image updates if necessary
-        images?.forEach { image ->
-            try {
-                val img = Image(fileName = image.originalFilename ?: "unknown", data = image.bytes, experience = existing)
-                existing.images.add(img)
-            } catch (ex: Exception) {
-                logger.error("Error processing image: ", ex)
-                // Handle exception as needed
-            }
+
+        // Handle images
+        images?.forEach { multipartFile ->
+            val image = Image(
+                data = multipartFile.bytes,
+                experience = existing,
+                fileName = multipartFile.originalFilename ?: "unknown"
+            )
+            imageRepository.save(image)
         }
+
         return repository.save(existing)
     }
 

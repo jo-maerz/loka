@@ -21,6 +21,4 @@ data class User(
 
     @Column(name = "last_name", nullable = false)
     var lastName: String = ""
-    
-    // Add other fields as necessary with default values
 )

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
-import { LeafletMapComponent } from './components/leaflet-map/leaflet-map.component';
-import { CreateExperienceModalComponent } from './components/create-experience-modal/create-experience-modal.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -23,12 +21,16 @@ import { MatGridListModule } from '@angular/material/grid-list';
 
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from './environment';
-import { LoginDialogComponent } from './login-dialog/login-dialog.component';
-import { ConfirmDeleteModalComponent } from './confirm-delete-modal/confirm-delete-modal.component';
-import { ExperienceSidebarComponent } from './experience-sidebar/experience-sidebar.component';
+import { LoginDialogComponent } from './components/login-dialog/login-dialog.component';
+import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal.component';
+import { ExperienceSidebarComponent } from './components/experience-sidebar/experience-sidebar.component';
 import { OAuthModule } from 'angular-oauth2-oidc';
 import { AuthInterceptor } from './services/auth.interceptor';
 import { SignUpDialogComponent } from './sign-up-dialog/sign-up-dialog.component';
+import { ReviewFormComponent } from './components/review-form/review-form.component';
+import { ReviewListComponent } from './components/review-list/review-list.component';
+import { LeafletMapComponent } from './components/leaflet-map/leaflet-map.component';
+import { CreateExperienceModalComponent } from './components/create-experience-modal/create-experience-modal.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +41,9 @@ import { SignUpDialogComponent } from './sign-up-dialog/sign-up-dialog.component
     ConfirmDeleteModalComponent,
     ExperienceSidebarComponent,
     SignUpDialogComponent,
+    ReviewFormComponent,
+    ReviewFormComponent,
+    ReviewListComponent,
   ],
   imports: [
     BrowserModule,

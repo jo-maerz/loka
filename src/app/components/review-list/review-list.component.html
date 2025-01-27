@@ -1,0 +1,17 @@
+<div class="review-list">
+  <h3>Reviews</h3>
+  <div *ngIf="reviews.length === 0">
+    <p>No reviews yet.</p>
+  </div>
+  <div *ngFor="let review of reviews" class="review-item">
+    <p><strong>User ID:</strong> {{ review.userId }}</p>
+    <p><strong>Rating:</strong> {{ review.rating }} / 5</p>
+    <p><strong>Date:</strong> {{ review.reviewDate | date : "medium" }}</p>
+    <p><strong>Description:</strong> {{ review.description }}</p>
+    <hr />
+  </div>
+
+  <div *ngIf="errorMessage" class="error">
+    {{ errorMessage }}
+  </div>
+</div>

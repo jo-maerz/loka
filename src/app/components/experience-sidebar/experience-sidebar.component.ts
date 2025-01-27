@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Experience } from '../models/experience.model';
-import { ExperienceService } from '../services/experience.service';
-import { CreateExperienceModalComponent } from '../components/create-experience-modal/create-experience-modal.component';
+import { Experience } from '../../models/experience.model';
+import { ExperienceService } from '../../services/experience.service';
+import { CreateExperienceModalComponent } from '../create-experience-modal/create-experience-modal.component';
 import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-delete-modal.component';
 
 @Component({

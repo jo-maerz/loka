@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { AuthService } from '../services/auth.service';
-import { SignUpDialogComponent } from '../sign-up-dialog/sign-up-dialog.component';
+import { AuthService } from '../../services/auth.service';
+import { SignUpDialogComponent } from '../../sign-up-dialog/sign-up-dialog.component';
 
 @Component({
   selector: 'app-login-dialog',

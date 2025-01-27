@@ -44,7 +44,6 @@
     <strong>Hashtags:</strong> {{ experience.hashtags!.join(" ") }}
   </p>
 </div>
-
 <!-- Footer with actions (edit/delete) pinned at the bottom -->
 <div class="sidebar-footer">
   <button mat-raised-button color="primary" (click)="openEditModal()">
@@ -54,3 +53,15 @@
     Delete
   </button>
 </div>
+
+<!-- Review Form -->
+<app-review-form
+  *ngIf="experience?.id"
+  [experienceId]="experience.id!!"
+></app-review-form>
+
+<!-- Review List -->
+<app-review-list
+  *ngIf="experience?.id"
+  [experienceId]="experience.id!!"
+></app-review-list>

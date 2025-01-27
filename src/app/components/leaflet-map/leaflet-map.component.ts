@@ -202,10 +202,9 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       .afterClosed()
       .subscribe((result: { experience: Experience; files: File[] }) => {
         if (result) {
-          const { images, ...experienceWithoutImages } = result.experience;
-
+          const { id, images, ...experienceDto } = result.experience;
           this.experienceService
-            .createExperience(experienceWithoutImages, result.files)
+            .createExperience(experienceDto, result.files)
             .subscribe({
               next: () => this.refreshMap(),
               error: (err) => console.error('Failed to create:', err),

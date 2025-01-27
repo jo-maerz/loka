@@ -321,13 +321,12 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       position: position,
       description: this.experienceForm.get('description')?.value,
       hashtags: hashtags,
-      category: this.experienceForm.get('category')?.value,
-      images: this.experienceForm.get('images')?.value || [],
+      category: this.experienceForm.get('category')?.value
     };
 
-    const filesToUpload = experience.images?.map(
-      (img: ExperienceImage) => img.file
-    );
+    const filesToUpload = this.experienceForm
+      .get('images')
+      ?.value?.map((img: ExperienceImage) => img.file);
 
     this.dialogRef.close({
       experience: experience,

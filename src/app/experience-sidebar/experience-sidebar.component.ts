@@ -48,12 +48,12 @@ export class ExperienceSidebarComponent implements OnInit {
       .afterClosed()
       .subscribe((result: { experience: Experience; files: File[] }) => {
         if (result) {
-          const { images, ...experienceWithoutImages } = result.experience;
+          const { id, images, ...experienceDto } = result.experience;
 
           this.experienceService
             .updateExperience(
               result.experience.id!,
-              experienceWithoutImages,
+              experienceDto,
               result.files
             )
             .subscribe(() => {

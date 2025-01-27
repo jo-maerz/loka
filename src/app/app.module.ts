@@ -21,7 +21,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatGridListModule } from '@angular/material/grid-list';
 
-import { ExperiencePopupComponent } from './components/experience-popup/experience-popup.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from './environment';
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
@@ -36,7 +35,6 @@ import { SignUpDialogComponent } from './sign-up-dialog/sign-up-dialog.component
     AppComponent,
     LeafletMapComponent,
     CreateExperienceModalComponent,
-    ExperiencePopupComponent,
     LoginDialogComponent,
     ConfirmDeleteModalComponent,
     ExperienceSidebarComponent,

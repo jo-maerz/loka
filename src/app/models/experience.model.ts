@@ -17,11 +17,8 @@ export interface Position {
 
 export interface ExperienceImage {
   id?: number;
-  name?: string;
-  type?: string;
-  data?: ArrayBuffer; // From backend response
-  preview?: string; // Frontend preview (Base64)
-  file?: File; // Frontend upload (File object)
+  fileName?: string;
+  filePath: string;
 }
 
 export interface Experience {

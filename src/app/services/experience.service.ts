@@ -38,10 +38,7 @@ export class ExperienceService {
       throw new Error('Experience object is undefined');
     }
 
-    const experienceBlob = new Blob([JSON.stringify(experience)], {
-      type: 'application/json',
-    });
-    formData.append('experience', experienceBlob);
+    formData.append('experience', JSON.stringify(experience));
 
     files.forEach((file) => {
       formData.append('images', file, file.name);
@@ -61,10 +58,7 @@ export class ExperienceService {
       throw new Error('Experience object is undefined');
     }
 
-    const experienceBlob = new Blob([JSON.stringify(experience)], {
-      type: 'application/json',
-    });
-    formData.append('experience', experienceBlob);
+    formData.append('experience', JSON.stringify(experience));
 
     files.forEach((file) => {
       formData.append('images', file, file.name);

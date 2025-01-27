@@ -31,8 +31,8 @@
 
   <!-- Images in a grid (or horizontally scrollable) -->
   <div *ngIf="(experience?.images)!.length > 0" class="images-container">
-    <div class="image-box" *ngFor="let pic of experience.images">
-      <img [src]="pic" alt="Experience Image" class="image-img" />
+    <div class="image-box" *ngFor="let img of experience.images">
+      <img [src]="img.filePath" alt="img.fileName" class="image-img" />
     </div>
   </div>
 

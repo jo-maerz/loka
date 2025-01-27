@@ -20,21 +20,14 @@ class ExperienceController(
     private val service: ExperienceService,
     @Autowired private val objectMapper: ObjectMapper
 ) {
-
     private val logger = LoggerFactory.getLogger(ExperienceController::class.java)
 
-    /**
-     * Retrieve all experiences.
-     */
     @GetMapping
     fun getAllExperiences(): ResponseEntity<List<Experience>> {
         val experiences = service.findAll()
         return ResponseEntity.ok(experiences)
     }
 
-    /**
-     * Retrieve a specific experience by ID.
-     */
     @GetMapping("/{id}")
     fun getExperienceById(@PathVariable id: Long): ResponseEntity<Experience> {
         val experience = service.findById(id)
@@ -46,14 +39,13 @@ class ExperienceController(
     }
 
     /**
-     * Create a new experience.
-     * Accepts multipart form data with 'experience' JSON and optional 'images'.
+     * Create a new experience with optional images.
      */
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED')")
     fun createExperience(
         @RequestPart("experience") @Valid experienceJson: String,
-        @RequestPart("images") images: List<MultipartFile>?,
+        @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
         authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
@@ -66,16 +58,12 @@ class ExperienceController(
         }
     }
 
-    /**
-     * Update an existing experience by ID.
-     * Accepts multipart form data with 'experience' JSON and optional 'images'.
-     */
     @PutMapping("/{id}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)")
     fun updateExperience(
         @PathVariable id: Long,
         @RequestPart("experience") @Valid experienceJson: String,
-        @RequestPart("images") images: List<MultipartFile>?,
+        @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
         authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
@@ -92,9 +80,6 @@ class ExperienceController(
         }
     }
 
-    /**
-     * Delete an experience by ID.
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)")
     fun deleteExperience(@PathVariable id: Long): ResponseEntity<Void> {

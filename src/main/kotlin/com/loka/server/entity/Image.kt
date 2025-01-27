@@ -1,8 +1,7 @@
 package com.loka.server.entity
 
-import jakarta.persistence.*
 import com.fasterxml.jackson.annotation.JsonBackReference
-import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.persistence.*
 
 @Entity
 data class Image(
@@ -10,16 +9,15 @@ data class Image(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    @Lob
-    @Column(name = "data", nullable = false)
-    @JsonIgnore // Prevents Jackson from serializing this field
-    val data: ByteArray = ByteArray(0),
+    // Full or relative path to the file on disk
+    @Column(name = "file_path", nullable = false)
+    val filePath: String = "",
+
+    @Column(name = "file_name", nullable = false)
+    val fileName: String = "",
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "experience_id")
-    @JsonBackReference // Manages bidirectional relationship serialization
-    val experience: Experience? = null,
-
-    @Column(name = "file_name", nullable = false)
-    val fileName: String = ""
+    @JsonBackReference
+    val experience: Experience? = null
 )

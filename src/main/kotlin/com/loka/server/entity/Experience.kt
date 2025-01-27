@@ -1,7 +1,7 @@
 package com.loka.server.entity
 
-import jakarta.persistence.*
 import com.fasterxml.jackson.annotation.JsonManagedReference
+import jakarta.persistence.*
 
 @Embeddable
 data class Position(

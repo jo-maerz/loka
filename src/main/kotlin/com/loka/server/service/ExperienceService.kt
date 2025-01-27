@@ -1,5 +1,8 @@
 package com.loka.server.service
 
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.PutObjectRequest
+import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.entity.Image
@@ -7,18 +10,23 @@ import com.loka.server.repository.ExperienceRepository
 import com.loka.server.repository.ImageRepository
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import org.slf4j.LoggerFactory
-import org.springframework.transaction.annotation.Transactional
+import java.io.File
+import java.nio.file.Files
 import java.time.Instant
 
 @Service
 class ExperienceService(
     private val repository: ExperienceRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+    private val s3Client: AmazonS3 // Injected from MinioConfig
 ) {
 
     private val logger = LoggerFactory.getLogger(ExperienceService::class.java)
+
+    private val bucketName = "my-bucket"
 
     fun findAll(): List<Experience> {
         return repository.findAll()
@@ -30,7 +38,7 @@ class ExperienceService(
 
     @Transactional
     fun create(dto: ExperienceDTO, images: List<MultipartFile>?, authentication: Authentication): Experience {
-        val currentTimestamp = Instant.now().toString() // Convert Instant to String
+        val now = Instant.now().toString()
         val experience = Experience(
             name = dto.name,
             startDateTime = dto.startDateTime,
@@ -40,27 +48,50 @@ class ExperienceService(
             description = dto.description ?: "",
             hashtags = dto.hashtags ?: listOf(),
             category = dto.category,
-            createdAt = currentTimestamp,
-            updatedAt = currentTimestamp,
+            createdAt = now,
+            updatedAt = now,
             createdBy = authentication.name
         )
-        // Handle image storage if necessary
-        images?.forEach { image ->
+
+        repository.save(experience)
+
+        images?.forEach { multipartFile ->
+            val originalFilename = multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
+            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]", "_")
+
+            val tempFile = Files.createTempFile("upload-", cleanFilename).toFile()
+            multipartFile.transferTo(tempFile)
+
             try {
-                val img = Image(fileName = image.originalFilename ?: "unknown", data = image.bytes, experience = experience)
-                experience.images.add(img)
-            } catch (ex: Exception) {
-                logger.error("Error processing image: ", ex)
-                // Handle exception as needed
+                 val objectKey = "experiences/${experience.id}/$cleanFilename"
+
+                val putReq = PutObjectRequest(bucketName, objectKey, tempFile)
+                    .withCannedAcl(CannedAccessControlList.PublicRead)
+                s3Client.putObject(putReq)
+
+                val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
+
+                val imageEntity = Image(
+                    fileName = cleanFilename,
+                    filePath = fileUrl, 
+                    experience = experience
+                )
+                experience.images.add(imageEntity)
+
+                logger.info("Uploaded $cleanFilename to MinIO at $fileUrl")
+
+            } finally {
+                tempFile.delete()
             }
         }
+
         return repository.save(experience)
     }
 
     @Transactional
     fun update(id: Long, dto: ExperienceDTO, images: List<MultipartFile>?, authentication: Authentication): Experience? {
         val existing = repository.findById(id).orElse(null) ?: return null
-        // Update fields
+
         existing.id = id
         existing.name = dto.name
         existing.startDateTime = dto.startDateTime
@@ -69,16 +100,34 @@ class ExperienceService(
         existing.position = dto.position
         existing.description = dto.description ?: ""
         existing.hashtags = dto.hashtags ?: listOf()
-        existing.updatedAt = Instant.now().toString() // Convert Instant to String
+        existing.updatedAt = Instant.now().toString()
 
-        // Handle images
+        repository.save(existing)
+
         images?.forEach { multipartFile ->
-            val image = Image(
-                data = multipartFile.bytes,
-                experience = existing,
-                fileName = multipartFile.originalFilename ?: "unknown"
-            )
-            imageRepository.save(image)
+            val originalFilename = multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
+            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]", "_")
+
+            val tempFile = Files.createTempFile("upload-", cleanFilename).toFile()
+            multipartFile.transferTo(tempFile)
+
+            try {
+                val objectKey = "experiences/${existing.id}/$cleanFilename"
+                val putReq = PutObjectRequest(bucketName, objectKey, tempFile)
+                    .withCannedAcl(CannedAccessControlList.PublicRead)
+                s3Client.putObject(putReq)
+                val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
+
+                val imageEntity = Image(
+                    fileName = cleanFilename,
+                    filePath = fileUrl,
+                    experience = existing
+                )
+                existing.images.add(imageEntity)
+
+            } finally {
+                tempFile.delete()
+            }
         }
 
         return repository.save(existing)

@@ -16,8 +16,8 @@ import com.loka.server.entity.*
 class DataInitializer(private val experienceRepository: ExperienceRepository) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
+        // experienceRepository.deleteAll();
         if (experienceRepository.findAll().size < 1) {
-            
             // Define city center coordinates and addresses
             val cities = listOf(
                 "Frankfurt" to Pair(50.1109, 8.6821),

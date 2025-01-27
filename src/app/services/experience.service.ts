@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Experience } from '../models/experience.model';
-import { ImageConverterService } from './image-converter.service';
-import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -11,10 +9,7 @@ import { map } from 'rxjs/operators';
 export class ExperienceService {
   private baseUrl = 'http://localhost:8080/api/experiences';
 
-  constructor(
-    private http: HttpClient,
-    private imageConverter: ImageConverterService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   // Get all experiences
   getAllExperiences(): Observable<Experience[]> {
@@ -23,9 +18,7 @@ export class ExperienceService {
 
   // Get a single experience by ID
   getExperienceById(id: number): Observable<Experience> {
-    return this.http
-      .get<Experience>(`${this.baseUrl}/${id}`)
-      .pipe(map((exp: Experience) => this.imageConverter.convertImages(exp)));
+    return this.http.get<Experience>(`${this.baseUrl}/${id}`);
   }
 
   // Create a new experience

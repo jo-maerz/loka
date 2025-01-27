@@ -19,6 +19,7 @@ export interface ExperienceImage {
   id?: number;
   fileName?: string;
   filePath: string;
+  file?: File;
 }
 
 export interface Experience {

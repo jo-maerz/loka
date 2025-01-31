@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
@@ -35,6 +36,18 @@ class GlobalExceptionHandler {
     ): ResponseEntity<String> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("Invalid parameter: ${ex.message}")
+    }
+
+    /** Handle validation errors for @Valid annotated request bodies. */
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValidException(
+            ex: MethodArgumentNotValidException
+    ): ResponseEntity<String> {
+        val errors =
+                ex.bindingResult.fieldErrors.joinToString(", ") {
+                    "${it.field}: ${it.defaultMessage}"
+                }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Validation failed: $errors")
     }
 
     @ExceptionHandler(Exception::class)

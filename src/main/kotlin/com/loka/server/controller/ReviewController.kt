@@ -1,86 +1,77 @@
 package com.loka.server.controller
 
 import com.loka.server.entity.Review
+import com.loka.server.entity.ReviewDTO
 import com.loka.server.service.ReviewService
+import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/reviews")
 class ReviewController(private val reviewService: ReviewService) {
-    // Create a new review
-    @PostMapping
+    private val logger = LoggerFactory.getLogger(ReviewController::class.java)
+
+    @PostMapping("/experiences/{experienceId}")
     fun createReview(
-            @RequestParam userId: Long,
-            @RequestParam experienceId: Long,
-            @RequestParam rating: Int,
-            @RequestParam description: String
+            @PathVariable experienceId: Long,
+            @RequestBody @Valid reviewDTO: ReviewDTO,
+            authentication: Authentication
     ): ResponseEntity<Review> {
         return try {
-            val review = reviewService.createReview(userId, experienceId, rating, description)
-            ResponseEntity.ok(review)
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.badRequest().body(null)
+            val userKeycloakId =
+                    authentication.name // Assuming authentication.name holds keycloakId
+            val user =
+                    reviewService.userRepository.findByKeycloakId(userKeycloakId).orElseThrow {
+                        IllegalArgumentException("User not found")
+                    }
+            val review = reviewService.createReview(user.id, experienceId, reviewDTO)
+            ResponseEntity.status(HttpStatus.CREATED).body(review)
+        } catch (ex: Exception) {
+            logger.error("Error creating review: ", ex)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
         }
     }
 
-    // Get a review by ID
-    @GetMapping("/{id}")
-    fun getReviewById(@PathVariable id: Long): ResponseEntity<Review> {
-        return try {
-            val review = reviewService.getReviewById(id)
-            ResponseEntity.ok(review)
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.notFound().build()
-        }
-    }
-
-    // Get all reviews for a specific experience
-    @GetMapping("/experience/{experienceId}")
+    @GetMapping("/experiences/{experienceId}")
     fun getReviewsByExperience(@PathVariable experienceId: Long): ResponseEntity<List<Review>> {
         return try {
             val reviews = reviewService.getReviewsByExperience(experienceId)
             ResponseEntity.ok(reviews)
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.notFound().build()
+        } catch (ex: Exception) {
+            logger.error("Error fetching reviews: ", ex)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(emptyList())
         }
     }
 
-    // Get all reviews by a specific user
-    @GetMapping("/user/{userId}")
-    fun getReviewsByUser(@PathVariable userId: Long): ResponseEntity<List<Review>> {
-        return try {
-            val reviews = reviewService.getReviewsByUser(userId)
-            ResponseEntity.ok(reviews)
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.notFound().build()
-        }
-    }
-
-    // Update a review
-    @PutMapping("/{id}")
+    @PutMapping("/{reviewId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     fun updateReview(
-            @PathVariable id: Long,
-            @RequestParam rating: Int,
-            @RequestParam description: String,
-            @RequestParam userId: Long
+            @PathVariable reviewId: Long,
+            @RequestBody @Valid reviewDTO: ReviewDTO
     ): ResponseEntity<Review> {
         return try {
-            val updatedReview = reviewService.updateReview(id, rating, description, userId)
+            val updatedReview = reviewService.updateReview(reviewId, reviewDTO)
             ResponseEntity.ok(updatedReview)
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.badRequest().body(null)
+        } catch (ex: Exception) {
+            logger.error("Error updating review: ", ex)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
         }
     }
 
-    // Delete a review
-    @DeleteMapping("/{id}")
-    fun deleteReview(@PathVariable id: Long, @RequestParam userId: Long): ResponseEntity<Void> {
+    @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    fun deleteReview(@PathVariable reviewId: Long): ResponseEntity<Void> {
         return try {
-            reviewService.deleteReview(id, userId)
+            reviewService.deleteReview(reviewId)
             ResponseEntity.noContent().build()
-        } catch (ex: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+        } catch (ex: Exception) {
+            logger.error("Error deleting review: ", ex)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
     }
 }

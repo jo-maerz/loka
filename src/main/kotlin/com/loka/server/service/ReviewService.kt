@@ -1,112 +1,89 @@
 package com.loka.server.service
 
 import com.loka.server.entity.Review
+import com.loka.server.entity.ReviewDTO
 import com.loka.server.repository.ExperienceRepository
 import com.loka.server.repository.ReviewRepository
 import com.loka.server.repository.UserRepository
-import java.time.LocalDateTime
+import java.time.Instant
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ReviewService(
         private val reviewRepository: ReviewRepository,
-        private val experienceRepository: ExperienceRepository,
-        private val userRepository: UserRepository
+        public val userRepository: UserRepository,
+        private val experienceRepository: ExperienceRepository
 ) {
+    private val logger = LoggerFactory.getLogger(ReviewService::class.java)
 
+    /** Creates a new review for an experience by a user. */
     @Transactional
-    fun createReview(userId: Long, experienceId: Long, rating: Int, description: String): Review {
+    fun createReview(userId: Long, experienceId: Long, dto: ReviewDTO): Review {
         val user =
                 userRepository.findById(userId).orElseThrow {
-                    IllegalArgumentException("User not found with ID: $userId")
+                    IllegalArgumentException("User not found")
                 }
 
         val experience =
                 experienceRepository.findById(experienceId).orElseThrow {
-                    IllegalArgumentException("Experience not found with ID: $experienceId")
+                    IllegalArgumentException("Experience not found")
                 }
+
+        // Prevent creators from reviewing their own experience
+        if (experience.createdBy == user.email) {
+            throw IllegalArgumentException("Creators cannot review their own experiences.")
+        }
 
         // Check if the user has already reviewed this experience
         if (reviewRepository.findByUserAndExperience(user, experience).isPresent) {
             throw IllegalArgumentException("User has already reviewed this experience.")
         }
 
-        // Validate rating
-        if (rating !in 1..5) {
-            throw IllegalArgumentException("Rating must be between 1 and 5.")
-        }
-
         val review =
                 Review(
+                        stars = dto.stars,
+                        text = dto.text,
                         user = user,
                         experience = experience,
-                        reviewDate = LocalDateTime.now(),
-                        rating = rating,
-                        description = description
+                        createdAt = Instant.now().toString(),
+                        updatedAt = Instant.now().toString()
                 )
 
         return reviewRepository.save(review)
     }
 
-    fun getReviewById(reviewId: Long): Review {
-        return reviewRepository.findById(reviewId).orElseThrow {
-            IllegalArgumentException("Review not found with ID: $reviewId")
-        }
-    }
-
+    /** Retrieves all reviews for a given experience. */
     fun getReviewsByExperience(experienceId: Long): List<Review> {
         val experience =
                 experienceRepository.findById(experienceId).orElseThrow {
-                    IllegalArgumentException("Experience not found with ID: $experienceId")
+                    IllegalArgumentException("Experience not found")
                 }
         return reviewRepository.findByExperience(experience)
     }
 
-    fun getReviewsByUser(userId: Long): List<Review> {
-        val user =
-                userRepository.findById(userId).orElseThrow {
-                    IllegalArgumentException("User not found with ID: $userId")
-                }
-        return reviewRepository.findByUser(user)
-    }
-
+    /** Updates an existing review. Only admins can perform this action. */
     @Transactional
-    fun updateReview(reviewId: Long, rating: Int, description: String, userId: Long): Review {
+    fun updateReview(reviewId: Long, dto: ReviewDTO): Review {
         val review =
                 reviewRepository.findById(reviewId).orElseThrow {
-                    IllegalArgumentException("Review not found with ID: $reviewId")
+                    IllegalArgumentException("Review not found")
                 }
 
-        // Ensure that only the review's author can update it
-        if (review.user?.id != userId) {
-            throw IllegalArgumentException("User is not authorized to update this review.")
-        }
-
-        // Validate rating
-        if (rating !in 1..5) {
-            throw IllegalArgumentException("Rating must be between 1 and 5.")
-        }
-
-        review.rating = rating
-        review.description = description
-        // Optionally, update the reviewDate or add a lastUpdatedDate field
+        review.stars = dto.stars
+        review.text = dto.text
+        review.updatedAt = Instant.now().toString()
 
         return reviewRepository.save(review)
     }
 
+    /** Deletes a review. Only admins can perform this action. */
     @Transactional
-    fun deleteReview(reviewId: Long, userId: Long) {
-        val review =
-                reviewRepository.findById(reviewId).orElseThrow {
-                    IllegalArgumentException("Review not found with ID: $reviewId")
-                }
-
-        // Ensure that only the review's author or an admin can delete it
-        if (review.user?.id != userId) {
-            throw IllegalArgumentException("User is not authorized to delete this review.")
+    fun deleteReview(reviewId: Long) {
+        if (!reviewRepository.existsById(reviewId)) {
+            throw IllegalArgumentException("Review not found")
         }
-
-        reviewRepository.delete(review)
+        reviewRepository.deleteById(reviewId)
     }
 }

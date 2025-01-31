@@ -6,7 +6,7 @@ networks:
 
 services:
   pg-database:
-    container_name: postgres_container
+    container_name: loka_postgres_container
     image: postgres:15.0
     env_file: ./database.env
     volumes:
@@ -19,7 +19,7 @@ services:
         - frontend
 
   pgadmin:
-    container_name: pgadmin_container
+    container_name: loka_pgadmin_container
     image: dpage/pgadmin4
     env_file: ./database.env
     volumes:

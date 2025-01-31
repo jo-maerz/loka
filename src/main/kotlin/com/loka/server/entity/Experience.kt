@@ -49,6 +49,9 @@ data class Experience(
         @OneToMany(mappedBy = "experience", cascade = [CascadeType.ALL], orphanRemoval = true)
         @JsonManagedReference
         var images: MutableList<Image> = mutableListOf(),
+        @OneToMany(mappedBy = "experience", cascade = [CascadeType.ALL], orphanRemoval = true)
+        @JsonManagedReference
+        var reviews: MutableList<Review> = mutableListOf(),
         var createdAt: String = "",
         var updatedAt: String = "",
         var createdBy: String? = null

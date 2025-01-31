@@ -58,15 +58,38 @@ class SecurityConfig(private val jwtAuthenticationConverter: JwtAuthenticationCo
                             // Permit all GET requests to experiences
                             .requestMatchers(HttpMethod.GET, "/api/experiences/**")
                             .permitAll()
-                            // Restrict POST requests to ADMIN and VERIFIED roles
-                            .requestMatchers(HttpMethod.POST, "/api/experiences/**")
+                            // Permit all GET requests to reviews
+                            .requestMatchers(HttpMethod.GET, "/api/reviews/**")
+                            .permitAll()
+                            // Restrict POST requests to experiences and reviews to ADMIN and
+                            // VERIFIED roles
+                            .requestMatchers(
+                                    HttpMethod.POST,
+                                    "/api/experiences/**",
+                                    "/api/reviews/**"
+                            )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            // Restrict PUT, PATCH, DELETE requests to ADMIN and VERIFIED roles
-                            .requestMatchers(HttpMethod.PUT, "/api/experiences/**")
+                            // Restrict PUT, PATCH requests to experiences and reviews to ADMIN and
+                            // VERIFIED roles
+                            .requestMatchers(
+                                    HttpMethod.PUT,
+                                    "/api/experiences/**",
+                                    "/api/reviews/**"
+                            )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            .requestMatchers(HttpMethod.PATCH, "/api/experiences/**")
+                            .requestMatchers(
+                                    HttpMethod.PATCH,
+                                    "/api/experiences/**",
+                                    "/api/reviews/**"
+                            )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            .requestMatchers(HttpMethod.DELETE, "/api/experiences/**")
+                            // Restrict DELETE requests to experiences and reviews to ADMIN and
+                            // VERIFIED roles
+                            .requestMatchers(
+                                    HttpMethod.DELETE,
+                                    "/api/experiences/**",
+                                    "/api/reviews/**"
+                            )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
                             // All other requests require authentication
                             .anyRequest()

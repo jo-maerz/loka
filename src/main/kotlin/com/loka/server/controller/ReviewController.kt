@@ -3,22 +3,18 @@ package com.loka.server.controller
 import com.loka.server.entity.Review
 import com.loka.server.service.ReviewService
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/reviews")
-class ReviewController(
-    private val reviewService: ReviewService
-) {
-
+class ReviewController(private val reviewService: ReviewService) {
     // Create a new review
     @PostMapping
     fun createReview(
-        @RequestParam userId: Long,
-        @RequestParam experienceId: Long,
-        @RequestParam rating: Int,
-        @RequestParam description: String
+            @RequestParam userId: Long,
+            @RequestParam experienceId: Long,
+            @RequestParam rating: Int,
+            @RequestParam description: String
     ): ResponseEntity<Review> {
         return try {
             val review = reviewService.createReview(userId, experienceId, rating, description)
@@ -64,10 +60,10 @@ class ReviewController(
     // Update a review
     @PutMapping("/{id}")
     fun updateReview(
-        @PathVariable id: Long,
-        @RequestParam rating: Int,
-        @RequestParam description: String,
-        @RequestParam userId: Long
+            @PathVariable id: Long,
+            @RequestParam rating: Int,
+            @RequestParam description: String,
+            @RequestParam userId: Long
     ): ResponseEntity<Review> {
         return try {
             val updatedReview = reviewService.updateReview(id, rating, description, userId)
@@ -79,10 +75,7 @@ class ReviewController(
 
     // Delete a review
     @DeleteMapping("/{id}")
-    fun deleteReview(
-        @PathVariable id: Long,
-        @RequestParam userId: Long
-    ): ResponseEntity<Void> {
+    fun deleteReview(@PathVariable id: Long, @RequestParam userId: Long): ResponseEntity<Void> {
         return try {
             reviewService.deleteReview(id, userId)
             ResponseEntity.noContent().build()

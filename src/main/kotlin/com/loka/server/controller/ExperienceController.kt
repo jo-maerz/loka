@@ -1,24 +1,24 @@
 package com.loka.server.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.service.ExperienceService
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
-import org.springframework.web.multipart.MultipartFile
+import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
-import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/experiences")
 class ExperienceController(
-    private val service: ExperienceService,
-    @Autowired private val objectMapper: ObjectMapper
+        private val service: ExperienceService,
+        @Autowired private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(ExperienceController::class.java)
 
@@ -30,6 +30,7 @@ class ExperienceController(
 
     @GetMapping("/{id}")
     fun getExperienceById(@PathVariable id: Long): ResponseEntity<Experience> {
+
         val experience = service.findById(id)
         return if (experience != null) {
             ResponseEntity.ok(experience)
@@ -38,15 +39,13 @@ class ExperienceController(
         }
     }
 
-    /**
-     * Create a new experience with optional images.
-     */
+    /** Create a new experience with optional images. */
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED')")
     fun createExperience(
-        @RequestPart("experience") @Valid experienceJson: String,
-        @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
-        authentication: Authentication
+            @RequestPart("experience") @Valid experienceJson: String,
+            @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
+            authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
             val dto = objectMapper.readValue(experienceJson, ExperienceDTO::class.java)
@@ -59,12 +58,14 @@ class ExperienceController(
     }
 
     @PutMapping("/{id}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)")
+    @PreAuthorize(
+            "hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)"
+    )
     fun updateExperience(
-        @PathVariable id: Long,
-        @RequestPart("experience") @Valid experienceJson: String,
-        @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
-        authentication: Authentication
+            @PathVariable id: Long,
+            @RequestPart("experience") @Valid experienceJson: String,
+            @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
+            authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
             val dto = objectMapper.readValue(experienceJson, ExperienceDTO::class.java)
@@ -81,7 +82,9 @@ class ExperienceController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)")
+    @PreAuthorize(
+            "hasAnyAuthority('ADMIN', 'VERIFIED') and @experienceSecurity.isOwner(#id, authentication)"
+    )
     fun deleteExperience(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             val deleted = service.delete(id)

@@ -23,14 +23,13 @@ class MinioConfig {
         val creds = BasicAWSCredentials(accessKey, secretKey)
         val clientConfig = ClientConfiguration()
 
-        return AmazonS3ClientBuilder
-            .standard()
-            .withEndpointConfiguration(
-                AwsClientBuilder.EndpointConfiguration(endpointUrl, region)
-            )
-            .withPathStyleAccessEnabled(true) // needed for MinIO
-            .withClientConfiguration(clientConfig)
-            .withCredentials(AWSStaticCredentialsProvider(creds))
-            .build()
+        return AmazonS3ClientBuilder.standard()
+                .withEndpointConfiguration(
+                        AwsClientBuilder.EndpointConfiguration(endpointUrl, region)
+                )
+                .withPathStyleAccessEnabled(true) // needed for MinIO
+                .withClientConfiguration(clientConfig)
+                .withCredentials(AWSStaticCredentialsProvider(creds))
+                .build()
     }
 }

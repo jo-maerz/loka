@@ -33,4 +33,5 @@ export interface Experience {
   hashtags?: string[];
   category?: Category;
   images?: ExperienceImage[];
+  createdBy?: string;
 }

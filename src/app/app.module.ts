@@ -18,6 +18,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatDividerModule } from '@angular/material/divider';
 
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from './environment';
@@ -61,6 +62,7 @@ import { CreateExperienceModalComponent } from './components/create-experience-m
     MatSidenavModule,
     MatCardModule,
     MatProgressSpinnerModule,
+    MatDividerModule,
     MatGridListModule,
     ReactiveFormsModule,
     OAuthModule.forRoot({

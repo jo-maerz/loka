@@ -106,7 +106,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }).addTo(this.map);
 
     this.map.on('click', (event: L.LeafletMouseEvent) => {
-      console.log('Map clicked:', event.latlng);
+      //console.log('Map clicked:', event.latlng);
     });
   }
 
@@ -181,7 +181,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onMarkerClick(exp: Experience): void {
-    console.log('Marker clicked for experience:', exp.name);
+    //console.log('Marker clicked for experience:', exp.name);
     this.selectedExperience = exp;
     this.drawer.open();
   }

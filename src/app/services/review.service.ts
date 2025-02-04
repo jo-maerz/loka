@@ -1,49 +1,38 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Review } from '../models/review.model';
+import { environment } from '../environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ReviewService {
-  private apiUrl = '/api/reviews';
+  private apiUrl = `${environment.apiUrl}/reviews`;
 
   constructor(private http: HttpClient) {}
 
-  createReview(review: Review): Observable<Review> {
-    let params = new HttpParams()
-      .set('experienceId', review.experienceId.toString())
-      .set('rating', review.rating.toString())
-      .set('description', review.description);
-    // Assuming userId is handled via authentication and not sent as a parameter
-    return this.http.post<Review>(`${this.apiUrl}`, null, { params });
-  }
-
-  getReviewById(id: number): Observable<Review> {
-    return this.http.get<Review>(`${this.apiUrl}/${id}`);
-  }
-
   getReviewsByExperience(experienceId: number): Observable<Review[]> {
-    return this.http.get<Review[]>(`${this.apiUrl}/experience/${experienceId}`);
+    return this.http.get<Review[]>(
+      `${this.apiUrl}/experiences/${experienceId}`
+    );
   }
 
-  getReviewsByUser(userId: number): Observable<Review[]> {
-    return this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`);
+  createReview(
+    experienceId: number,
+    review: Partial<Review>
+  ): Observable<Review> {
+    return this.http.post<Review>(
+      `${this.apiUrl}/experiences/${experienceId}`,
+      review
+    );
   }
 
   updateReview(review: Review): Observable<Review> {
-    let params = new HttpParams()
-      .set('rating', review.rating.toString())
-      .set('description', review.description);
-    // Assuming userId is handled via authentication and not sent as a parameter
-    return this.http.put<Review>(`${this.apiUrl}/${review.id}`, null, {
-      params,
-    });
+    return this.http.put<Review>(`${this.apiUrl}/${review.id}`, review);
   }
 
   deleteReview(id: number): Observable<void> {
-    // Assuming userId is handled via authentication and not sent as a parameter
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

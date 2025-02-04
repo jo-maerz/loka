@@ -32,7 +32,7 @@
   <!-- Images in a grid (or horizontally scrollable) -->
   <div *ngIf="(experience?.images)!.length > 0" class="images-container">
     <div class="image-box" *ngFor="let img of experience.images">
-      <img [src]="img.filePath" alt="img.fileName" class="image-img" />
+      <img [src]="img.filePath" alt="{{ img.fileName }}" class="image-img" />
     </div>
   </div>
 
@@ -44,8 +44,13 @@
     <strong>Hashtags:</strong> {{ experience.hashtags!.join(" ") }}
   </p>
 </div>
+
 <!-- Footer with actions (edit/delete) pinned at the bottom -->
-<div class="sidebar-footer">
+<!-- Only show if the user is logged in and is the owner of the experience (or an admin) -->
+<div
+  class="sidebar-footer"
+  *ngIf="authService.isLoggedIn && authService.isOwner(experience.createdBy!)"
+>
   <button mat-raised-button color="primary" (click)="openEditModal()">
     Edit
   </button>
@@ -56,12 +61,12 @@
 
 <!-- Review Form -->
 <app-review-form
-  *ngIf="experience?.id"
-  [experienceId]="experience.id!!"
+  *ngIf="experience?.id && authService.isLoggedIn"
+  [experienceId]="experience.id!"
 ></app-review-form>
 
 <!-- Review List -->
 <app-review-list
   *ngIf="experience?.id"
-  [experienceId]="experience.id!!"
+  [experienceId]="experience.id!"
 ></app-review-list>

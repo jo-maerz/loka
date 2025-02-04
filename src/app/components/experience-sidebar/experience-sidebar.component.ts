@@ -1,9 +1,11 @@
+// experience-sidebar.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Experience } from '../../models/experience.model';
 import { ExperienceService } from '../../services/experience.service';
 import { CreateExperienceModalComponent } from '../create-experience-modal/create-experience-modal.component';
 import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-delete-modal.component';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-experience-sidebar',
@@ -13,18 +15,14 @@ import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-del
 export class ExperienceSidebarComponent implements OnInit {
   @Input() experience!: Experience;
 
-  /**
-   * Parent (LeafletMapComponent) can listen for these events:
-   * - refreshMap: re-fetch experiences after an edit/delete
-   * - closeSidebar: close the sidenav
-   */
   @Output() refreshMap = new EventEmitter<void>();
   @Output() closeSidebar = new EventEmitter<void>();
   selectedFiles: File[] = [];
 
   constructor(
     private experienceService: ExperienceService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {}
@@ -49,7 +47,6 @@ export class ExperienceSidebarComponent implements OnInit {
       .subscribe((result: { experience: Experience; files: File[] }) => {
         if (result) {
           const { id, images, ...experienceDto } = result.experience;
-
           this.experienceService
             .updateExperience(
               result.experience.id!,
@@ -66,9 +63,7 @@ export class ExperienceSidebarComponent implements OnInit {
   openDeleteModal(): void {
     const dialogRef = this.dialog.open(ConfirmDeleteModalComponent, {
       width: '400px',
-      data: {
-        confirmMessage: 'Do you really want to delete this experience?',
-      },
+      data: { confirmMessage: 'Do you really want to delete this experience?' },
     });
 
     dialogRef.afterClosed().subscribe((confirmDelete: boolean) => {
@@ -87,7 +82,7 @@ export class ExperienceSidebarComponent implements OnInit {
       });
   }
 
-  onFileSelect(event: any) {
+  onFileSelect(event: any): void {
     this.selectedFiles = Array.from(event.target.files);
   }
 }

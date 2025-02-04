@@ -1,8 +1,14 @@
 export interface Review {
-  id?: number;
+  id: number;
+  stars: number;
+  text?: string;
   userId: number;
-  experienceId: number;
   reviewDate: string;
-  rating: number;
-  description: string;
+  reviewer: Reviwer;
+}
+
+interface Reviwer {
+  firstName: string;
+  lastName: string;
+  email: string;
 }

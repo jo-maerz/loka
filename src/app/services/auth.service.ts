@@ -1,4 +1,3 @@
-// auth.service.ts
 import { Injectable } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { environment } from '../environment';
@@ -28,7 +27,15 @@ export class AuthService {
     return this.oauthService
       .fetchTokenUsingPasswordFlow(email, password)
       .then(() => {
-        // todo post-login logic
+        // Explicitly load the user profile to populate identity claims.
+        return this.oauthService.loadUserProfile();
+      })
+      .then((profile: any) => {
+        if (profile && profile.info && profile.info.sub) {
+          localStorage.setItem('userId', profile.info.sub.toString());
+        } else {
+          console.warn('No sub property found in profile.');
+        }
       })
       .catch((err) => {
         console.error('Login error:', err);
@@ -37,11 +44,12 @@ export class AuthService {
   }
 
   signUp(signUpData: SignUpRequest): Observable<any> {
-    // No need to attach Authorization headers; handled by interceptor
     return this.http.post(`${environment.apiUrl}/auth/signup`, signUpData);
   }
 
   logout() {
+    // Remove stored userId
+    localStorage.removeItem('userId');
     const idToken = this.oauthService.getIdToken();
     this.oauthService.logOut({
       client_id: environment.authConfig.clientId,
@@ -60,5 +68,26 @@ export class AuthService {
 
   get userProfile() {
     return this.oauthService.getIdentityClaims();
+  }
+
+  // Retrieve the stored userId from localStorage
+  get userId(): string | null {
+    return localStorage.getItem('userId');
+  }
+
+  /**
+   * Returns true if the currently logged in user is either the owner of the resource
+   * (i.e. the user id matches the experience's createdBy) or if the user has the ADMIN role.
+   *
+   * This method reads the identity claims from the OAuth token.
+   */
+  isOwner(experienceCreatedBy: string): boolean {
+    const profile = this.oauthService.getIdentityClaims() as any;
+    if (!profile) {
+      return false;
+    }
+    const sub: string = profile.sub;
+    const roles: string[] = profile.roles || [];
+    return sub === experienceCreatedBy || roles.includes('ADMIN');
   }
 }

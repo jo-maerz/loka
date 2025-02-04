@@ -1,42 +1,48 @@
-<div class="review-form">
-  <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
-    <div>
-      <label for="rating">Rating (1-5):</label>
-      <select id="rating" formControlName="rating">
-        <option *ngFor="let r of [1, 2, 3, 4, 5]" [value]="r">{{ r }}</option>
-      </select>
-      <div
-        *ngIf="
-          reviewForm.get('rating')?.invalid && reviewForm.get('rating')?.touched
-        "
-      >
-        <small>Rating must be between 1 and 5.</small>
-      </div>
-    </div>
+<mat-card class="review-form-card">
+  <mat-card-title>Submit a Review</mat-card-title>
+  <mat-card-content>
+    <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
+      <!-- Rating Field -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Rating</mat-label>
+        <mat-select formControlName="stars" required>
+          <mat-option *ngFor="let r of [1, 2, 3, 4, 5]" [value]="r">
+            {{ r }} Star{{ r > 1 ? "s" : "" }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="reviewForm.get('stars')?.hasError('required')">
+          Rating is required.
+        </mat-error>
+      </mat-form-field>
 
-    <div>
-      <label for="description">Description:</label>
-      <textarea
-        id="description"
-        formControlName="description"
-        rows="5"
-      ></textarea>
-      <div
-        *ngIf="
-          reviewForm.get('description')?.invalid &&
-          reviewForm.get('description')?.touched
-        "
-      >
-        <small
-          >Description is required and must be less than 1000 characters.</small
+      <!-- Description Field -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="text" rows="5" required></textarea>
+        <mat-error *ngIf="reviewForm.get('text')?.hasError('required')">
+          Description is required.
+        </mat-error>
+        <mat-error *ngIf="reviewForm.get('text')?.hasError('maxlength')">
+          Description cannot exceed 1000 characters.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Submit Button -->
+      <div class="button-container">
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="reviewForm.invalid"
         >
+          Submit Review
+        </button>
       </div>
-    </div>
 
-    <button type="submit" [disabled]="reviewForm.invalid">Submit Review</button>
-
-    <div *ngIf="errorMessage" class="error">
-      {{ errorMessage }}
-    </div>
-  </form>
-</div>
+      <!-- Error Message -->
+      <mat-error *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </mat-error>
+    </form>
+  </mat-card-content>
+</mat-card>

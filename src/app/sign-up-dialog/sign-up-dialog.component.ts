@@ -20,7 +20,7 @@ export class SignUpDialogComponent {
 
   signUp() {
     if (!this.email || !this.password || !this.firstName || !this.lastName) {
-      // Optionally, show validation errors
+      // Optionally, show validation errors to the user.
       return;
     }
 
@@ -33,12 +33,20 @@ export class SignUpDialogComponent {
 
     this.authService.signUp(signUpData).subscribe({
       next: () => {
-        // Optionally, log in the user automatically after sign-up
-        this.dialogRef.close();
+        // Automatically log the user in after a successful sign-up.
+        this.authService
+          .login(this.email, this.password)
+          .then(() => {
+            this.dialogRef.close();
+          })
+          .catch((error) => {
+            console.error('Auto login failed:', error);
+            // Optionally, display an error message to the user.
+          });
       },
       error: (error) => {
         console.error('Sign Up failed:', error);
-        // Optionally, display an error message to the user
+        // Optionally, display an error message to the user.
       },
     });
   }

@@ -7,6 +7,7 @@ export const environment = {
     postLogoutRedirectUri: window.location.origin,
     responseType: 'code',
     scope: 'openid profile email',
+    oidc: false,
     requireHttps: false, // For development only
     showDebugInformation: true,
   },

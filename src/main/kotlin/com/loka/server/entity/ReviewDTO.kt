@@ -19,6 +19,7 @@ data class ReviewResponseDTO(
         val id: Long?,
         val stars: Int,
         val text: String,
+        val userId: String,
         val createdAt: String,
         val updatedAt: String,
         val reviewer: ReviewerDTO
@@ -32,6 +33,7 @@ fun toReviewResponseDTO(review: Review): ReviewResponseDTO {
                 text = review.text,
                 createdAt = review.createdAt,
                 updatedAt = review.updatedAt,
+                userId = review.user.keycloakId,
                 reviewer =
                         ReviewerDTO(
                                 firstName = review.user.firstName,

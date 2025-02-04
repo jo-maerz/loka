@@ -1,12 +1,10 @@
 package com.loka.server.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.service.ExperienceService
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -16,10 +14,8 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/experiences")
-class ExperienceController(
-        private val service: ExperienceService,
-        @Autowired private val objectMapper: ObjectMapper
-) {
+class ExperienceController(private val service: ExperienceService) {
+
     private val logger = LoggerFactory.getLogger(ExperienceController::class.java)
 
     @GetMapping
@@ -30,7 +26,6 @@ class ExperienceController(
 
     @GetMapping("/{id}")
     fun getExperienceById(@PathVariable id: Long): ResponseEntity<Experience> {
-
         val experience = service.findById(id)
         return if (experience != null) {
             ResponseEntity.ok(experience)
@@ -43,12 +38,11 @@ class ExperienceController(
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED')")
     fun createExperience(
-            @RequestPart("experience") @Valid experienceJson: String,
+            @RequestPart("experience") @Valid dto: ExperienceDTO,
             @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
             authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
-            val dto = objectMapper.readValue(experienceJson, ExperienceDTO::class.java)
             val createdExperience = service.create(dto, images, authentication)
             ResponseEntity.status(201).body(createdExperience)
         } catch (ex: Exception) {
@@ -63,12 +57,11 @@ class ExperienceController(
     )
     fun updateExperience(
             @PathVariable id: Long,
-            @RequestPart("experience") @Valid experienceJson: String,
+            @RequestPart("experience") @Valid dto: ExperienceDTO,
             @RequestPart(value = "images", required = false) images: List<MultipartFile>? = null,
             authentication: Authentication
     ): ResponseEntity<Experience> {
         return try {
-            val dto = objectMapper.readValue(experienceJson, ExperienceDTO::class.java)
             val updatedExperience = service.update(id, dto, images, authentication)
             if (updatedExperience != null) {
                 ResponseEntity.ok(updatedExperience)

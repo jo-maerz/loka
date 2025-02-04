@@ -1,14 +1,12 @@
 package com.loka.server.service
 
 import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.CannedAccessControlList
-import com.amazonaws.services.s3.model.PutObjectRequest
+import com.amazonaws.services.s3.model.ObjectMetadata
 import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.entity.Image
 import com.loka.server.repository.ExperienceRepository
 import com.loka.server.repository.ImageRepository
-import java.nio.file.Files
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
@@ -42,7 +40,8 @@ class ExperienceService(
             authentication: Authentication
     ): Experience {
         val now = Instant.now().toString()
-        val experience =
+        // Create an experience entity (without images yet)
+        var experience =
                 Experience(
                         name = dto.name,
                         startDateTime = dto.startDateTime,
@@ -57,34 +56,31 @@ class ExperienceService(
                         createdBy = authentication.name
                 )
 
-        repository.save(experience)
+        // Save initially to generate an ID
+        experience = repository.save(experience)
 
         images?.forEach { multipartFile ->
             val originalFilename =
                     multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
-            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]", "_")
+            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]".toRegex(), "_")
 
-            val tempFile = Files.createTempFile("upload-", cleanFilename).toFile()
-            multipartFile.transferTo(tempFile)
+            val objectKey = "experiences/${experience.id}/$cleanFilename"
+            // Prepare metadata (e.g. content length and type)
+            val metadata =
+                    ObjectMetadata().apply {
+                        contentLength = multipartFile.size
+                        contentType = multipartFile.contentType
+                    }
+            // Upload file using the input stream (no temporary file needed)
+            s3Client.putObject(bucketName, objectKey, multipartFile.inputStream, metadata)
+            val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
 
-            try {
-                val objectKey = "experiences/${experience.id}/$cleanFilename"
+            // Create an Image entity and add it to the experience
+            val imageEntity =
+                    Image(fileName = cleanFilename, filePath = fileUrl, experience = experience)
+            experience.images.add(imageEntity)
 
-                val putReq =
-                        PutObjectRequest(bucketName, objectKey, tempFile)
-                                .withCannedAcl(CannedAccessControlList.PublicRead)
-                s3Client.putObject(putReq)
-
-                val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
-
-                val imageEntity =
-                        Image(fileName = cleanFilename, filePath = fileUrl, experience = experience)
-                experience.images.add(imageEntity)
-
-                logger.info("Uploaded $cleanFilename to MinIO at $fileUrl")
-            } finally {
-                tempFile.delete()
-            }
+            logger.info("Uploaded $cleanFilename to S3 at $fileUrl")
         }
 
         return repository.save(experience)
@@ -99,7 +95,6 @@ class ExperienceService(
     ): Experience? {
         val existing = repository.findById(id).orElse(null) ?: return null
 
-        existing.id = id
         existing.name = dto.name
         existing.startDateTime = dto.startDateTime
         existing.endDateTime = dto.endDateTime
@@ -109,30 +104,25 @@ class ExperienceService(
         existing.hashtags = dto.hashtags ?: listOf()
         existing.updatedAt = Instant.now().toString()
 
-        repository.save(existing)
-
         images?.forEach { multipartFile ->
             val originalFilename =
                     multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
-            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]", "_")
+            val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]".toRegex(), "_")
 
-            val tempFile = Files.createTempFile("upload-", cleanFilename).toFile()
-            multipartFile.transferTo(tempFile)
+            val objectKey = "experiences/${existing.id}/$cleanFilename"
+            val metadata =
+                    ObjectMetadata().apply {
+                        contentLength = multipartFile.size
+                        contentType = multipartFile.contentType
+                    }
+            s3Client.putObject(bucketName, objectKey, multipartFile.inputStream, metadata)
+            val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
 
-            try {
-                val objectKey = "experiences/${existing.id}/$cleanFilename"
-                val putReq =
-                        PutObjectRequest(bucketName, objectKey, tempFile)
-                                .withCannedAcl(CannedAccessControlList.PublicRead)
-                s3Client.putObject(putReq)
-                val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
+            val imageEntity =
+                    Image(fileName = cleanFilename, filePath = fileUrl, experience = existing)
+            existing.images.add(imageEntity)
 
-                val imageEntity =
-                        Image(fileName = cleanFilename, filePath = fileUrl, experience = existing)
-                existing.images.add(imageEntity)
-            } finally {
-                tempFile.delete()
-            }
+            logger.info("Uploaded $cleanFilename to S3 at $fileUrl")
         }
 
         return repository.save(existing)

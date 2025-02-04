@@ -1,7 +1,8 @@
 package com.loka.server.controller
 
-import com.loka.server.entity.Review
 import com.loka.server.entity.ReviewDTO
+import com.loka.server.entity.ReviewResponseDTO
+import com.loka.server.entity.toReviewResponseDTO
 import com.loka.server.service.ReviewService
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -21,27 +22,29 @@ class ReviewController(private val reviewService: ReviewService) {
             @PathVariable experienceId: Long,
             @RequestBody @Valid reviewDTO: ReviewDTO,
             authentication: Authentication
-    ): ResponseEntity<Review> {
+    ): ResponseEntity<ReviewResponseDTO> {
         return try {
-            val userKeycloakId =
-                    authentication.name // Assuming authentication.name holds keycloakId
+            val userKeycloakId = authentication.name
+            // Look up the user by keycloakId (this repository is public on ReviewService)
             val user =
                     reviewService.userRepository.findByKeycloakId(userKeycloakId).orElseThrow {
                         IllegalArgumentException("User not found")
                     }
             val review = reviewService.createReview(user.id, experienceId, reviewDTO)
-            ResponseEntity.status(HttpStatus.CREATED).body(review)
+            ResponseEntity.status(HttpStatus.CREATED).body(toReviewResponseDTO(review))
         } catch (ex: Exception) {
             logger.error("Error creating review: ", ex)
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
     }
 
     @GetMapping("/experiences/{experienceId}")
-    fun getReviewsByExperience(@PathVariable experienceId: Long): ResponseEntity<List<Review>> {
+    fun getReviewsByExperience(
+            @PathVariable experienceId: Long
+    ): ResponseEntity<List<ReviewResponseDTO>> {
         return try {
             val reviews = reviewService.getReviewsByExperience(experienceId)
-            ResponseEntity.ok(reviews)
+            ResponseEntity.ok(reviews.map { toReviewResponseDTO(it) })
         } catch (ex: Exception) {
             logger.error("Error fetching reviews: ", ex)
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body(emptyList())
@@ -53,13 +56,13 @@ class ReviewController(private val reviewService: ReviewService) {
     fun updateReview(
             @PathVariable reviewId: Long,
             @RequestBody @Valid reviewDTO: ReviewDTO
-    ): ResponseEntity<Review> {
+    ): ResponseEntity<ReviewResponseDTO> {
         return try {
             val updatedReview = reviewService.updateReview(reviewId, reviewDTO)
-            ResponseEntity.ok(updatedReview)
+            ResponseEntity.ok(toReviewResponseDTO(updatedReview))
         } catch (ex: Exception) {
             logger.error("Error updating review: ", ex)
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
     }
 

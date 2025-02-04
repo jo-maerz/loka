@@ -13,6 +13,8 @@ import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
@@ -30,47 +32,43 @@ class SecurityConfig(private val jwtAuthenticationConverter: JwtAuthenticationCo
     }
 
     @Bean
+    fun corsConfigurationSource(): UrlBasedCorsConfigurationSource {
+        val configuration =
+                CorsConfiguration().apply {
+                    allowedOrigins = listOf("http://localhost:4200") // Frontend URL
+                    allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    allowedHeaders = listOf("*")
+                    allowCredentials = true
+                }
+        return UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/**", configuration)
+        }
+    }
+
+    @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-                // Disable CSRF for APIs
-                .csrf { csrf -> csrf.disable() }
-                // Configure CORS
-                .cors { cors ->
-                    cors.configurationSource { request ->
-                        val config = org.springframework.web.cors.CorsConfiguration()
-                        config.allowedOrigins = listOf("http://localhost:4200") // Frontend URL
-                        config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        config.allowedHeaders = listOf("*")
-                        config.allowCredentials = true
-                        config
-                    }
-                }
-                // Configure session management as stateless
-                .sessionManagement { session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                }
-                // Configure authorization
+                .csrf { it.disable() }
+                .cors {} // Uses the corsConfigurationSource bean
+                .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 .authorizeHttpRequests { authz ->
                     authz
-                            // Permit all for sign-up and login endpoints
+                            // Permit signup and login endpoints
                             .requestMatchers("/api/auth/signup", "/api/auth/login")
                             .permitAll()
-                            // Permit all GET requests to experiences
+                            // Allow GET requests to experiences and reviews for everyone
                             .requestMatchers(HttpMethod.GET, "/api/experiences/**")
                             .permitAll()
-                            // Permit all GET requests to reviews
                             .requestMatchers(HttpMethod.GET, "/api/reviews/**")
                             .permitAll()
-                            // Restrict POST requests to experiences and reviews to ADMIN and
-                            // VERIFIED roles
-                            .requestMatchers(
-                                    HttpMethod.POST,
-                                    "/api/experiences/**",
-                                    "/api/reviews/**"
-                            )
+                            // For posting experiences, only ADMIN or VERIFIED are allowed
+                            .requestMatchers(HttpMethod.POST, "/api/experiences/**")
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            // Restrict PUT, PATCH requests to experiences and reviews to ADMIN and
-                            // VERIFIED roles
+                            // For posting reviews, any authenticated user is allowed
+                            .requestMatchers(HttpMethod.POST, "/api/reviews/**")
+                            .authenticated()
+                            // For updating (PUT/PATCH) and deleting, keep the restriction (you can
+                            // adjust these as needed)
                             .requestMatchers(
                                     HttpMethod.PUT,
                                     "/api/experiences/**",
@@ -83,21 +81,17 @@ class SecurityConfig(private val jwtAuthenticationConverter: JwtAuthenticationCo
                                     "/api/reviews/**"
                             )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            // Restrict DELETE requests to experiences and reviews to ADMIN and
-                            // VERIFIED roles
                             .requestMatchers(
                                     HttpMethod.DELETE,
                                     "/api/experiences/**",
                                     "/api/reviews/**"
                             )
                             .hasAnyAuthority("ADMIN", "VERIFIED")
-                            // All other requests require authentication
                             .anyRequest()
                             .authenticated()
                 }
-                // Configure OAuth2 Resource Server to use JWT with custom converter
                 .oauth2ResourceServer { oauth2 ->
-                    oauth2.jwt { jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter) }
+                    oauth2.jwt { it.jwtAuthenticationConverter(jwtAuthenticationConverter) }
                 }
 
         return http.build()

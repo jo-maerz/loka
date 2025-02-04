@@ -10,3 +10,33 @@ data class ReviewDTO(
         val stars: Int,
         @field:NotBlank(message = "Description cannot be blank") val text: String
 )
+
+/** DTO that contains the reviewer’s basic information. */
+data class ReviewerDTO(val firstName: String, val lastName: String, val email: String)
+
+/** DTO that represents a review along with its reviewer's details. */
+data class ReviewResponseDTO(
+        val id: Long?,
+        val stars: Int,
+        val text: String,
+        val createdAt: String,
+        val updatedAt: String,
+        val reviewer: ReviewerDTO
+)
+
+/** Maps a [Review] entity to a [ReviewResponseDTO]. */
+fun toReviewResponseDTO(review: Review): ReviewResponseDTO {
+        return ReviewResponseDTO(
+                id = review.id,
+                stars = review.stars,
+                text = review.text,
+                createdAt = review.createdAt,
+                updatedAt = review.updatedAt,
+                reviewer =
+                        ReviewerDTO(
+                                firstName = review.user.firstName,
+                                lastName = review.user.lastName,
+                                email = review.user.email
+                        )
+        )
+}

@@ -1,6 +1,7 @@
 package com.loka.server.entity
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.*
 import java.time.Instant
 
@@ -16,7 +17,7 @@ data class Review(
         var text: String = "",
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "user_id", nullable = false)
-        @JsonBackReference
+        @JsonIgnoreProperties("reviews")
         var user: User = User(),
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "experience_id", nullable = false)

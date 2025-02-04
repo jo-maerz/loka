@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ReviewService(
         private val reviewRepository: ReviewRepository,
-        public val userRepository: UserRepository,
+        val userRepository: UserRepository,
         private val experienceRepository: ExperienceRepository
 ) {
     private val logger = LoggerFactory.getLogger(ReviewService::class.java)

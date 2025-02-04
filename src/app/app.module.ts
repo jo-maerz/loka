@@ -19,6 +19,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { environment } from './environment';
@@ -32,6 +33,7 @@ import { ReviewFormComponent } from './components/review-form/review-form.compon
 import { ReviewListComponent } from './components/review-list/review-list.component';
 import { LeafletMapComponent } from './components/leaflet-map/leaflet-map.component';
 import { CreateExperienceModalComponent } from './components/create-experience-modal/create-experience-modal.component';
+import { EditReviewModalComponent } from './edit-review-modal/edit-review-modal.component';
 
 @NgModule({
   declarations: [
@@ -43,8 +45,8 @@ import { CreateExperienceModalComponent } from './components/create-experience-m
     ExperienceSidebarComponent,
     SignUpDialogComponent,
     ReviewFormComponent,
-    ReviewFormComponent,
     ReviewListComponent,
+    EditReviewModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -64,6 +66,7 @@ import { CreateExperienceModalComponent } from './components/create-experience-m
     MatProgressSpinnerModule,
     MatDividerModule,
     MatGridListModule,
+    MatMenuModule,
     ReactiveFormsModule,
     OAuthModule.forRoot({
       resourceServer: {

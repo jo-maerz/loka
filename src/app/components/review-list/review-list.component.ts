@@ -4,10 +4,16 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import { ReviewService } from '../../services/review.service';
 import { Review } from '../../models/review.model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-delete-modal.component';
+import { EditReviewModalComponent } from '../../edit-review-modal/edit-review-modal.component';
 
 @Component({
   selector: 'app-review-list',
@@ -16,17 +22,24 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class ReviewListComponent implements OnInit, OnChanges {
   @Input() experienceId!: number;
+  @Input() reloadKey: number = 0; // This input triggers a reload when its value changes.
+  @Output() reviewChanged = new EventEmitter<void>(); // Emit event on changes
   reviews: Review[] = [];
   errorMessage: string = '';
 
-  constructor(private reviewService: ReviewService) {}
+  constructor(
+    private reviewService: ReviewService,
+    public authService: AuthService,
+    private dialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     this.loadReviews();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['experienceId'] && !changes['experienceId'].firstChange) {
+    // If reloadKey changes (and it's not the first change), reload the reviews.
+    if (changes['reloadKey'] && !changes['reloadKey'].firstChange) {
       this.loadReviews();
     }
   }
@@ -43,23 +56,51 @@ export class ReviewListComponent implements OnInit, OnChanges {
       },
       error: (err: HttpErrorResponse) => {
         console.error('Error fetching reviews:', err);
-        if (err.error instanceof ErrorEvent) {
-          // Client-side or network error
-          this.errorMessage = `An error occurred: ${err.error.message}`;
-        } else {
-          // Backend returned an unsuccessful response code
-          if (typeof err.error === 'string') {
-            // If the error is a simple string
-            this.errorMessage = err.error;
-          } else if (err.error && err.error.message) {
-            // If the error has a message property
-            this.errorMessage = err.error.message;
-          } else {
-            // Fallback message
-            this.errorMessage = 'An error occurred while fetching reviews.';
-          }
-        }
+        this.errorMessage =
+          err.error?.message || 'An error occurred while fetching reviews.';
       },
+    });
+  }
+
+  isCurrentUser(reviewerId: string): boolean {
+    return this.authService.userId === reviewerId;
+  }
+
+  editReview(review: Review): void {
+    const dialogRef = this.dialog.open(EditReviewModalComponent, {
+      width: '600px',
+      data: { ...review }, // Pass a copy of the review to edit
+    });
+
+    dialogRef.afterClosed().subscribe((updatedReview: Review) => {
+      if (updatedReview) {
+        // Call your review service to update the review with the updated data
+        this.reviewService
+          .updateReview(updatedReview.id!, {
+            stars: updatedReview.stars,
+            text: updatedReview.text,
+          })
+          .subscribe(() => {
+            this.loadReviews();
+            this.reviewChanged.emit();
+          });
+      }
+    });
+  }
+
+  deleteReview(review: Review): void {
+    const dialogRef = this.dialog.open(ConfirmDeleteModalComponent, {
+      width: '400px',
+      data: { confirmMessage: 'Do you really want to delete this review?' },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmDelete: boolean) => {
+      if (confirmDelete) {
+        this.reviewService.deleteReview(review.id!).subscribe(() => {
+          this.loadReviews();
+          this.reviewChanged.emit();
+        });
+      }
     });
   }
 }

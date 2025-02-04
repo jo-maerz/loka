@@ -107,6 +107,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.map.on('click', (event: L.LeafletMouseEvent) => {
       //console.log('Map clicked:', event.latlng);
+      this.closeSidebar();
     });
   }
 

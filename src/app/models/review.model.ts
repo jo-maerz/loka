@@ -12,3 +12,8 @@ interface Reviwer {
   lastName: string;
   email: string;
 }
+
+export interface ReviewDTO {
+  stars: number;
+  text?: string;
+}

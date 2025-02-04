@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Review } from '../models/review.model';
+import { ReviewDTO } from '../models/review.model';
 import { environment } from '../environment';
 
 @Injectable({
@@ -28,8 +29,8 @@ export class ReviewService {
     );
   }
 
-  updateReview(review: Review): Observable<Review> {
-    return this.http.put<Review>(`${this.apiUrl}/${review.id}`, review);
+  updateReview(reviewId: number, review: ReviewDTO): Observable<Review> {
+    return this.http.put<Review>(`${this.apiUrl}/${reviewId}`, review);
   }
 
   deleteReview(id: number): Observable<void> {

@@ -4,6 +4,8 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  EventEmitter,
+  Output,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ReviewService } from '../../services/review.service';
@@ -19,6 +21,7 @@ export class ReviewFormComponent implements OnInit, OnChanges {
   @Input() experienceId!: number;
   reviewForm!: FormGroup;
   errorMessage: string = '';
+  @Output() reviewSubmitted = new EventEmitter<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -61,6 +64,7 @@ export class ReviewFormComponent implements OnInit, OnChanges {
           alert('Review submitted successfully!');
           // todo: refresh the reviews list
           this.reviewForm.reset({ stars: 5, text: '' });
+          this.reviewSubmitted.emit();
         },
         error: (err) => {
           this.errorMessage =

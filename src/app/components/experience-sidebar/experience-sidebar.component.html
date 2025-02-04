@@ -59,14 +59,17 @@
   </button>
 </div>
 
-<!-- Review Form -->
+<!-- Review Form: Only show if no review from the current user exists -->
 <app-review-form
-  *ngIf="experience?.id && authService.isLoggedIn"
+  *ngIf="experience?.id && authService.isLoggedIn && !userHasReviewed"
   [experienceId]="experience.id!"
+  (reviewSubmitted)="onReviewSubmitted()"
 ></app-review-form>
 
-<!-- Review List -->
+<!-- Review List: Always show reviews. Pass the reloadKey so that the review list refreshes when it changes. -->
 <app-review-list
   *ngIf="experience?.id"
   [experienceId]="experience.id!"
+  [reloadKey]="reloadKey"
+  (reviewChanged)="onReviewChanged()"
 ></app-review-list>

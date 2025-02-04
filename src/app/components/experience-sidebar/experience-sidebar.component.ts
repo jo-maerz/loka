@@ -1,11 +1,19 @@
-// experience-sidebar.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  SimpleChanges,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Experience } from '../../models/experience.model';
 import { ExperienceService } from '../../services/experience.service';
 import { CreateExperienceModalComponent } from '../create-experience-modal/create-experience-modal.component';
 import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-delete-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { ReviewService } from '../../services/review.service';
+import { Review } from '../../models/review.model';
 
 @Component({
   selector: 'app-experience-sidebar',
@@ -14,18 +22,31 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ExperienceSidebarComponent implements OnInit {
   @Input() experience!: Experience;
-
+  @Input() isOpen: boolean = false; // (Optional) If your container toggles the sidebar via an input, add:
   @Output() refreshMap = new EventEmitter<void>();
   @Output() closeSidebar = new EventEmitter<void>();
-  selectedFiles: File[] = [];
+  userHasReviewed: boolean = false;
+  reloadKey: number = 0;
 
   constructor(
     private experienceService: ExperienceService,
+    private reviewService: ReviewService,
     private dialog: MatDialog,
     public authService: AuthService
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.experience?.id) {
+      this.refreshReviews();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // If the sidebar open state changes to "open", re‑fetch the reviews.
+    if (changes['isOpen'] && changes['isOpen'].currentValue === true) {
+      this.refreshReviews();
+    }
+  }
 
   get formattedDateRange(): string {
     if (!this.experience.startDateTime || !this.experience.endDateTime) {
@@ -82,7 +103,31 @@ export class ExperienceSidebarComponent implements OnInit {
       });
   }
 
-  onFileSelect(event: any): void {
-    this.selectedFiles = Array.from(event.target.files);
+  // Called when a review is submitted/edited/deleted.
+  refreshReviews(): void {
+    // Update the reloadKey so the review list knows to re-load.
+    this.reloadKey++;
+
+    // Optionally, re-check whether the user has already reviewed.
+    this.reviewService.getReviewsByExperience(this.experience.id!).subscribe({
+      next: (reviews) => {
+        this.userHasReviewed = reviews.some(
+          (review) => review.userId.toString() === this.authService.userId
+        );
+      },
+      error: (err) => {
+        console.error('Error refreshing reviews:', err);
+      },
+    });
+  }
+
+  // This method is called when the review form emits the reviewSubmitted event.
+  onReviewSubmitted(): void {
+    this.refreshReviews();
+  }
+
+  // This method can also be called when a review is deleted or edited.
+  onReviewChanged(): void {
+    this.refreshReviews();
   }
 }

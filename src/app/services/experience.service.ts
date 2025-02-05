@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Experience } from '../models/experience.model';
 
@@ -11,17 +11,39 @@ export class ExperienceService {
 
   constructor(private http: HttpClient) {}
 
-  // Get all experiences
+  getFilteredExperiences(
+    city?: string,
+    startDate?: Date,
+    endDate?: Date,
+    category?: string | null
+  ): Observable<Experience[]> {
+    let params = new HttpParams();
+
+    if (city) {
+      params = params.set('city', city);
+    }
+    if (startDate) {
+      // Convert JS date to ISO string: "2025-01-21T10:00:00"
+      params = params.set('startDateTime', startDate.toISOString());
+    }
+    if (endDate) {
+      params = params.set('endDateTime', endDate.toISOString());
+    }
+    if (category) {
+      params = params.set('category', category);
+    }
+
+    return this.http.get<Experience[]>(`${this.baseUrl}/search`, { params });
+  }
+
   getAllExperiences(): Observable<Experience[]> {
     return this.http.get<Experience[]>(this.baseUrl);
   }
 
-  // Get a single experience by ID
   getExperienceById(id: number): Observable<Experience> {
     return this.http.get<Experience>(`${this.baseUrl}/${id}`);
   }
 
-  // Create a new experience
   createExperience(
     experience: Experience,
     files: File[]
@@ -30,11 +52,18 @@ export class ExperienceService {
     if (!experience) {
       throw new Error('Experience object is undefined');
     }
-
-    // Wrap the JSON string in a Blob with MIME type application/json
-    const experienceBlob = new Blob([JSON.stringify(experience)], {
-      type: 'application/json',
-    });
+    const experienceBlob = new Blob(
+      [
+        JSON.stringify({
+          ...experience,
+          startDateTime: experience.startDateTime.toISOString(),
+          endDateTime: experience.endDateTime.toISOString(),
+        }),
+      ],
+      {
+        type: 'application/json',
+      }
+    );
     formData.append('experience', experienceBlob);
 
     files.forEach((file) => {
@@ -44,7 +73,6 @@ export class ExperienceService {
     return this.http.post<Experience>(this.baseUrl, formData);
   }
 
-  // Update an existing experience
   updateExperience(
     id: number,
     experience: Experience,
@@ -54,8 +82,6 @@ export class ExperienceService {
     if (!experience) {
       throw new Error('Experience object is undefined');
     }
-
-    // Wrap the JSON string in a Blob with MIME type application/json
     const experienceBlob = new Blob([JSON.stringify(experience)], {
       type: 'application/json',
     });
@@ -72,7 +98,6 @@ export class ExperienceService {
     });
   }
 
-  // Delete an experience
   deleteExperience(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

@@ -18,15 +18,15 @@
   <!-- Main map content -->
   <mat-sidenav-content>
     <div class="container-fluid d-flex flex-column vh-100">
-      <!-- Top row with city dropdown and date picker -->
+      <!-- Top row with city, start date, end date, category, login buttons -->
       <div class="row bg-light px-2 pt-3">
-        <div class="col-4">
-          <!-- City Dropdown -->
+        <!-- City Dropdown -->
+        <div class="col-3">
           <mat-form-field appearance="fill" class="full-width">
             <mat-label>Select City</mat-label>
             <mat-select
               [(value)]="selectedCity"
-              (selectionChange)="onCityChange($event.value)"
+              (selectionChange)="onFilterChange()"
             >
               <mat-option *ngFor="let c of cities" [value]="c">
                 {{ c.name }}
@@ -35,26 +35,58 @@
           </mat-form-field>
         </div>
 
-        <div class="col-4">
-          <!-- Date Picker -->
+        <div class="col-3">
           <mat-form-field appearance="fill" class="full-width">
-            <mat-label>Select Date</mat-label>
+            <mat-label>Start Date</mat-label>
             <input
               matInput
-              [matDatepicker]="picker"
-              [(ngModel)]="selectedDate"
-              (dateChange)="onDateChange()"
-              required
+              [matDatepicker]="startPicker"
+              [(ngModel)]="startDate"
+              (dateChange)="onDateChange('start')"
             />
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="picker"
-            ></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
+            <mat-datepicker-toggle matSuffix [for]="startPicker">
+            </mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
           </mat-form-field>
         </div>
 
-        <div class="col-4">
+        <!-- End Date Picker -->
+        <div class="col-3">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>End Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="endPicker"
+              [(ngModel)]="endDate"
+              (dateChange)="onDateChange('end')"
+              [errorStateMatcher]="matcher"
+            />
+            <mat-datepicker-toggle matSuffix [for]="endPicker">
+            </mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+            <mat-error *ngIf="dateError">{{ dateError }}</mat-error>
+          </mat-form-field>
+        </div>
+        <!-- Category Dropdown -->
+        <div class="col-3">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Category</mat-label>
+            <mat-select
+              [(value)]="selectedCategory"
+              (selectionChange)="onFilterChange()"
+            >
+              <mat-option [value]="null">-- All Categories --</mat-option>
+              <mat-option *ngFor="let cat of categories" [value]="cat">
+                {{ cat }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Second row with login/logout (optional) -->
+      <div class="row bg-light px-2">
+        <div class="col">
           <button
             mat-flat-button
             (click)="openLoginModal()"

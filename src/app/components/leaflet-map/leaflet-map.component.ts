@@ -9,6 +9,8 @@ import { MatSidenav } from '@angular/material/sidenav';
 import * as L from 'leaflet';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+import { FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 import { ExperienceService } from '../../services/experience.service';
 import { AuthService } from '../../services/auth.service';
@@ -30,25 +32,46 @@ import { LoginDialogComponent } from '../login-dialog/login-dialog.component';
 export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('drawer') drawer!: MatSidenav;
 
-  // The Leaflet map instance
   map!: L.Map;
 
-  // Experiences array
   experiences: Experience[] = [];
   experiencesSubscription!: Subscription;
 
-  // For date filtering
-  selectedDate: Date = new Date();
-
-  // City dropdown array + selected city
   cities = CITIES;
-  selectedCity = this.cities[0]; // default to the first city, e.g., Frankfurt
+  selectedCity = this.cities[0];
 
-  // Marker map: experience.id -> Leaflet Marker
+  startDate!: Date;
+  endDate!: Date;
+
+  dateError: string | null = null;
+
+  categories: string[] = [
+    'Concert',
+    'Art Installation',
+    'Food Festival',
+    'Outdoor Gathering',
+    'Flea Market',
+    'Exhibition',
+    'Workshop',
+    'Networking Event',
+    'Tech Talk',
+    'Others',
+  ];
+
+  selectedCategory: string | null = null;
+
   private markerMap = new Map<number, L.Marker>();
 
-  // The experience currently displayed in the sidebar
   selectedExperience?: Experience;
+
+  matcher: ErrorStateMatcher = {
+    isErrorState: (
+      control: FormControl | null,
+      form: FormGroupDirective | NgForm | null
+    ): boolean => {
+      return !!this.dateError;
+    },
+  };
 
   constructor(
     private experienceService: ExperienceService,
@@ -60,16 +83,11 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadLeafletIcons();
     this.initMap();
 
-    // Subscribe to experiences
-    this.experiencesSubscription = this.experienceService
-      .getAllExperiences()
-      .subscribe({
-        next: (data) => {
-          this.experiences = data;
-          this.updateMarkers();
-        },
-        error: (err) => console.error('Error fetching experiences:', err),
-      });
+    this.startDate = new Date();
+    this.endDate = new Date();
+    this.endDate.setDate(this.endDate.getDate() + 30);
+
+    this.fetchExperiencesFiltered();
   }
 
   ngAfterViewInit(): void {}
@@ -85,6 +103,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // =============== MAP SETUP ===============
   loadLeafletIcons(): void {
+    // Leaflet icon fix
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: markerIcon2x,
@@ -94,7 +113,6 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   initMap(): void {
-    // By default, center on the selectedCity coords
     this.map = L.map('map').setView(
       [this.selectedCity.lat, this.selectedCity.lng],
       16
@@ -105,84 +123,77 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
 
-    this.map.on('click', (event: L.LeafletMouseEvent) => {
-      //console.log('Map clicked:', event.latlng);
+    this.map.on('click', () => {
       this.closeSidebar();
     });
   }
 
-  // =============== CITY DROPDOWN HANDLER ===============
-  onCityChange(city: { name: string; lat: number; lng: number }): void {
-    this.selectedCity = city;
-    // Re-center the map on the newly selected city
-    if (this.map) {
-      this.map.setView([city.lat, city.lng], 16);
-      this.closeSidebar();
+  // =============== FILTER HANDLER ===============
+  onDateChange(changedField: 'start' | 'end'): void {
+    // Reset error
+    this.dateError = null;
+    if (this.startDate && this.endDate) {
+      // If the end date is before the start date, show an error
+      if (this.endDate < this.startDate) {
+        this.dateError =
+          'End Date cannot be before Start Date. Please correct the dates.';
+      } else {
+        // Valid date range => refresh map
+        this.onFilterChange();
+      }
+      console.log(this.dateError);
     }
   }
 
-  // =============== DATE HANDLER ===============
-  onDateChange(): void {
-    this.updateMarkers();
+  onFilterChange(): void {
+    if (this.map && this.selectedCity) {
+      this.map.setView([this.selectedCity.lat, this.selectedCity.lng], 16);
+    }
+    this.fetchExperiencesFiltered();
     this.closeSidebar();
+  }
+
+  fetchExperiencesFiltered(): void {
+    const cityName = this.selectedCity?.name;
+
+    this.experiencesSubscription = this.experienceService
+      .getFilteredExperiences(
+        cityName,
+        this.startDate,
+        this.endDate,
+        this.selectedCategory
+      )
+      .subscribe({
+        next: (data) => {
+          this.experiences = data;
+          this.updateMarkers();
+        },
+        error: (err) =>
+          console.error('Error fetching filtered experiences:', err),
+      });
   }
 
   // =============== MARKER SYNC & SIDEBAR ===============
   updateMarkers(): void {
-    // Extract the selected date (year, month, day)
-    const selectedYear = this.selectedDate.getFullYear();
-    const selectedMonth = this.selectedDate.getMonth();
-    const selectedDay = this.selectedDate.getDate();
-
-    // Filter experiences by selected date
-    const visibleExperiences = this.experiences.filter((exp) => {
-      const expStart = new Date(exp.startDateTime!);
-      const expEnd = new Date(exp.endDateTime!);
-
-      // Check if the selected date is within the experience's date range
-      return (
-        (expStart.getFullYear() < selectedYear ||
-          (expStart.getFullYear() === selectedYear &&
-            expStart.getMonth() < selectedMonth) ||
-          (expStart.getFullYear() === selectedYear &&
-            expStart.getMonth() === selectedMonth &&
-            expStart.getDate() <= selectedDay)) &&
-        (expEnd.getFullYear() > selectedYear ||
-          (expEnd.getFullYear() === selectedYear &&
-            expEnd.getMonth() > selectedMonth) ||
-          (expEnd.getFullYear() === selectedYear &&
-            expEnd.getMonth() === selectedMonth &&
-            expEnd.getDate() >= selectedDay))
-      );
-    });
-
-    // Convert visible experiences to a Set of IDs
-    const visibleIds = new Set<number>(visibleExperiences.map((e) => e.id!));
-
-    // Remove markers that are no longer visible
-    for (const [id, marker] of this.markerMap.entries()) {
-      if (!visibleIds.has(id)) {
-        marker.remove();
-        this.markerMap.delete(id);
-      }
+    // Remove existing markers
+    for (const [_, marker] of this.markerMap.entries()) {
+      marker.remove();
     }
+    this.markerMap.clear();
 
-    // Add markers for new visible experiences
-    for (const exp of visibleExperiences) {
-      if (!this.markerMap.has(exp.id!)) {
-        const newMarker = L.marker([
-          exp.position!.lat,
-          exp.position!.lng,
-        ]).addTo(this.map);
+    // Add new markers
+    for (const exp of this.experiences) {
+      if (exp.id != null && exp.position) {
+        const newMarker = L.marker([exp.position.lat, exp.position.lng]).addTo(
+          this.map
+        );
         newMarker.on('click', () => this.onMarkerClick(exp));
-        this.markerMap.set(exp.id!, newMarker);
+        this.markerMap.set(exp.id, newMarker);
       }
-      // If marker exists, no action needed since we already set its position
     }
   }
 
   onMarkerClick(exp: Experience): void {
-    //console.log('Marker clicked for experience:', exp.name);
     this.selectedExperience = exp;
     this.drawer.open();
   }
@@ -214,19 +225,12 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  // Called after editing/deleting from the sidebar => refresh the experiences
   refreshMap(): void {
-    this.experienceService.getAllExperiences().subscribe({
-      next: (data) => {
-        this.experiences = data;
-        this.updateMarkers();
-      },
-      error: (err) => console.error('Error refreshing experiences:', err),
-    });
+    this.fetchExperiencesFiltered();
   }
 
   openLoginModal() {
-    const dialogRef = this.dialog.open(LoginDialogComponent, {
+    this.dialog.open(LoginDialogComponent, {
       width: '600px',
       data: {},
     });

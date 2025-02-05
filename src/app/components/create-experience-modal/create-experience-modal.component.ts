@@ -8,6 +8,10 @@ import {
   FormBuilder,
   Validators,
   FormControl,
+  AbstractControl,
+  ValidationErrors,
+  FormGroupDirective,
+  NgForm,
 } from '@angular/forms';
 import {
   debounceTime,
@@ -17,6 +21,32 @@ import {
 } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { GeocodeResult, MapService } from '../../services/map.service';
+import { ErrorStateMatcher } from '@angular/material/core';
+
+export function dateRangeValidator(
+  formGroup: AbstractControl
+): ValidationErrors | null {
+  const startDate = formGroup.get('startDateTime.date')?.value;
+  const startTime = formGroup.get('startDateTime.time')?.value;
+  const endDate = formGroup.get('endDateTime.date')?.value;
+  const endTime = formGroup.get('endDateTime.time')?.value;
+
+  if (!startDate || !startTime || !endDate || !endTime) {
+    return null;
+  }
+
+  const start = combineDateTime(startDate, startTime);
+  const end = combineDateTime(endDate, endTime);
+
+  return end < start ? { invalidDateRange: true } : null;
+}
+
+function combineDateTime(dateValue: Date, timeString: string): Date {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const combined = new Date(dateValue);
+  combined.setHours(hours, minutes, 0, 0);
+  return combined;
+}
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -24,6 +54,28 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'assets/marker-icon.png',
   shadowUrl: 'assets/marker-shadow.png',
 });
+
+export class DateRangeErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(
+    control: FormControl | null,
+    form: FormGroupDirective | NgForm | null
+  ): boolean {
+    const isSubmitted = form && form.submitted;
+    const controlInvalid = !!(
+      control &&
+      control.invalid &&
+      (control.dirty || control.touched || isSubmitted)
+    );
+    const parent = control?.parent;
+    const parentInvalid = !!(
+      parent &&
+      parent.parent &&
+      parent.parent.hasError('invalidDateRange') &&
+      (parent.dirty || parent.touched || isSubmitted)
+    );
+    return controlInvalid || parentInvalid;
+  }
+}
 
 @Component({
   selector: 'app-create-experience-modal',
@@ -39,6 +91,9 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
 
   // To store uploaded images
   uploadedImages: ExperienceImage[] = [];
+
+  // Instantiate our custom ErrorStateMatcher.
+  dateRangeMatcher = new DateRangeErrorStateMatcher();
 
   private subscriptions: Subscription = new Subscription();
 
@@ -63,42 +118,47 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   }
 
   initializeForm(): void {
-    this.experienceForm = this.fb.group({
-      name: [this.data?.name || '', Validators.required],
-      startDateTime: this.fb.group({
-        date: [
-          this.data?.startDateTime ? new Date(this.data.startDateTime) : null,
-          Validators.required,
-        ],
-        time: [
-          this.data?.startDateTime
-            ? this.formatTime(new Date(this.data.startDateTime))
-            : '00:00',
-          Validators.required,
-        ],
-      }),
-      endDateTime: this.fb.group({
-        date: [
-          this.data?.endDateTime ? new Date(this.data.endDateTime) : null,
-          Validators.required,
-        ],
-        time: [
-          this.data?.endDateTime
-            ? this.formatTime(new Date(this.data.endDateTime))
-            : '00:00',
-          Validators.required,
-        ],
-      }),
-      address: [this.data?.address || '', Validators.required],
-      description: [this.data?.description || ''],
-      hashtags: [this.data?.hashtags ? this.data.hashtags.join(' ') : ''],
-      category: [this.data?.category || '', Validators.required],
-      images: [this.data?.images || []],
-      position: this.fb.group({
-        lat: [this.data?.position?.lat || 0, Validators.required],
-        lng: [this.data?.position?.lng || 0, Validators.required],
-      }),
-    });
+    this.experienceForm = this.fb.group(
+      {
+        name: [this.data?.name || '', Validators.required],
+        startDateTime: this.fb.group({
+          date: [
+            this.data?.startDateTime ? new Date(this.data.startDateTime) : null,
+            Validators.required,
+          ],
+          time: [
+            this.data?.startDateTime
+              ? this.formatTime(new Date(this.data.startDateTime))
+              : '00:00',
+            Validators.required,
+          ],
+        }),
+        endDateTime: this.fb.group({
+          date: [
+            this.data?.endDateTime ? new Date(this.data.endDateTime) : null,
+            Validators.required,
+          ],
+          time: [
+            this.data?.endDateTime
+              ? this.formatTime(new Date(this.data.endDateTime))
+              : '00:00',
+            Validators.required,
+          ],
+        }),
+        address: [this.data?.address || '', Validators.required],
+        description: [this.data?.description || ''],
+        hashtags: [this.data?.hashtags ? this.data.hashtags.join(' ') : ''],
+        category: [this.data?.category || '', Validators.required],
+        images: [this.data?.images || []],
+        position: this.fb.group({
+          lat: [this.data?.position?.lat || 0, Validators.required],
+          lng: [this.data?.position?.lng || 0, Validators.required],
+        }),
+      },
+      {
+        validators: [dateRangeValidator],
+      }
+    );
 
     if (this.isEditMode() && this.data.position) {
       this.experienceForm.patchValue({
@@ -145,9 +205,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     this.selectMap.on('click', this.onSelectMapClick.bind(this));
   }
 
-  /**
-   * Sets up automatic address search when user stops typing for 1 second.
-   */
   setupAddressAutoSearch(): void {
     const addressControl = this.experienceForm.get('address') as FormControl;
 
@@ -192,10 +249,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     this.subscriptions.add(addressSub);
   }
 
-  /**
-   * Handles map click events to add a marker and perform reverse geocoding.
-   * Also updates the address input without triggering the auto-search.
-   */
   onSelectMapClick(event: L.LeafletMouseEvent): void {
     const { lat, lng } = event.latlng;
     this.addMarker(lat, lng);
@@ -226,22 +279,15 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   }
 
   updatePosition(lat: number, lng: number, address: string): void {
-    // Update the position in the form
+    // Update the position in the form.
     const positionGroup = this.experienceForm.get('position') as FormGroup;
-    positionGroup.patchValue({
-      lat: lat,
-      lng: lng,
-    });
-
-    this.experienceForm.patchValue({
-      address: address,
-    });
+    positionGroup.patchValue({ lat, lng });
+    this.experienceForm.patchValue({ address });
 
     if (this.selectMarker) {
       this.selectMap.removeLayer(this.selectMarker);
     }
     this.selectMarker = L.marker([lat, lng]).addTo(this.selectMap);
-
     this.selectMap.setView([lat, lng], 14);
   }
 
@@ -270,36 +316,19 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Combines date and time into ISO string
-   */
-  getCombinedDateTime(groupName: 'startDateTime' | 'endDateTime'): string {
-    const group = this.experienceForm.get(groupName) as FormGroup;
-    const date: Date = group.get('date')?.value;
-    const time: string = group.get('time')?.value;
-
-    if (!date || !time) return '';
-
-    const [hours, minutes] = time.split(':').map(Number);
-    const combinedDate = new Date(date);
-    combinedDate.setHours(hours, minutes, 0, 0);
-    return combinedDate.toISOString();
-  }
-
   submitExperience(): void {
     if (this.experienceForm.invalid) {
       this.experienceForm.markAllAsTouched();
-      alert('Please fill in all required fields correctly.');
+      if (this.experienceForm.errors?.['invalidDateRange']) {
+        alert('End date/time must be after Start date/time.');
+      } else {
+        alert('Please fill in all required fields correctly.');
+      }
       return;
     }
 
     const startDateTime = this.getCombinedDateTime('startDateTime');
     const endDateTime = this.getCombinedDateTime('endDateTime');
-
-    if (new Date(endDateTime) <= new Date(startDateTime)) {
-      alert('End date and time must be after start date and time.');
-      return;
-    }
 
     const hashtagsInput = this.experienceForm.get('hashtags')?.value || '';
     const hashtags = hashtagsInput
@@ -315,8 +344,8 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     const experience: Experience = {
       id: this.data?.id,
       name: this.experienceForm.get('name')?.value,
-      startDateTime: startDateTime,
-      endDateTime: endDateTime,
+      startDateTime: new Date(startDateTime),
+      endDateTime: new Date(endDateTime),
       address: this.experienceForm.get('address')?.value,
       position: position,
       description: this.experienceForm.get('description')?.value,
@@ -336,33 +365,38 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     this.resetForm();
   }
 
+  private getCombinedDateTime(
+    groupName: 'startDateTime' | 'endDateTime'
+  ): string {
+    const group = this.experienceForm.get(groupName) as FormGroup;
+    const date: Date = group.get('date')?.value;
+    const time: string = group.get('time')?.value;
+    if (!date || !time) return new Date().toISOString();
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const combinedDate = new Date(date);
+    combinedDate.setHours(hours, minutes, 0, 0);
+    return combinedDate.toISOString();
+  }
+
   resetForm(): void {
     this.experienceForm.reset({
       name: '',
-      startDateTime: {
-        date: null,
-        time: '00:00',
-      },
-      endDateTime: {
-        date: null,
-        time: '00:00',
-      },
+      startDateTime: { date: null, time: '00:00' },
+      endDateTime: { date: null, time: '00:00' },
       address: '',
       description: '',
       hashtags: '',
       category: '',
       images: [],
-      position: {
-        lat: 0,
-        lng: 0,
-      },
+      position: { lat: 0, lng: 0 },
     });
     this.uploadedImages = [];
     if (this.selectMarker) {
       this.selectMap.removeLayer(this.selectMarker);
       this.selectMarker = null;
     }
-    // Reset the map view to default
+    // Reset the map view to default.
     this.selectMap.setView([50.1155, 8.6724], 14);
   }
 }

@@ -53,22 +53,34 @@
     <div formGroupName="endDateTime" class="date-time-group">
       <mat-form-field appearance="fill" class="date-field">
         <mat-label>End Date</mat-label>
+        <!-- Attach our custom error state matcher here -->
         <input
           matInput
           [matDatepicker]="endPicker"
           formControlName="date"
           required
           placeholder="Select end date"
+          [errorStateMatcher]="dateRangeMatcher"
         />
         <mat-datepicker-toggle
           matSuffix
           [for]="endPicker"
         ></mat-datepicker-toggle>
         <mat-datepicker #endPicker></mat-datepicker>
+        <!-- Display the required error first -->
         <mat-error
           *ngIf="experienceForm.get('endDateTime.date')?.hasError('required')"
         >
           End Date is required
+        </mat-error>
+        <!-- If no required error exists and the overall form has the date range error, show it -->
+        <mat-error
+          *ngIf="
+            !experienceForm.get('endDateTime.date')?.hasError('required') &&
+            experienceForm.hasError('invalidDateRange')
+          "
+        >
+          End date must be on or after the start date.
         </mat-error>
       </mat-form-field>
 
@@ -96,7 +108,6 @@
         placeholder="Enter address"
         autocomplete="off"
       />
-      <!-- Loading Spinner inside the Form Field -->
       <mat-progress-spinner
         *ngIf="loading"
         mode="indeterminate"
@@ -154,9 +165,9 @@
 
     <!-- Pictures -->
     <div class="images-section">
-      <label for="experiencePictures" class="form-label"
-        >Pictures (up to 10)</label
-      >
+      <label for="experiencePictures" class="form-label">
+        Pictures (up to 10)
+      </label>
       <input
         type="file"
         id="experiencePictures"
@@ -174,6 +185,7 @@
     </div>
   </form>
 </div>
+
 <div mat-dialog-actions class="dialog-actions">
   <button
     mat-raised-button

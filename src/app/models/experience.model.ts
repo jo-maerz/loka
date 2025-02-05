@@ -25,8 +25,8 @@ export interface ExperienceImage {
 export interface Experience {
   id?: number;
   name: string;
-  startDateTime: string; // ISO string with date and time
-  endDateTime: string; // ISO string with date and time
+  startDateTime: Date;
+  endDateTime: Date;
   address: string;
   position: Position;
   description?: string;

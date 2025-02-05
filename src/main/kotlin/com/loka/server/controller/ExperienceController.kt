@@ -4,7 +4,9 @@ import com.loka.server.entity.Experience
 import com.loka.server.entity.ExperienceDTO
 import com.loka.server.service.ExperienceService
 import jakarta.validation.Valid
+import java.time.OffsetDateTime
 import org.slf4j.LoggerFactory
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -24,17 +26,28 @@ class ExperienceController(private val service: ExperienceService) {
         return ResponseEntity.ok(experiences)
     }
 
+    @GetMapping("/search")
+    fun getExperiencesFiltered(
+            @RequestParam(required = false) city: String?,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            startDate: OffsetDateTime?,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            endDate: OffsetDateTime?,
+            @RequestParam(required = false) category: String?
+    ): ResponseEntity<List<Experience>> {
+        val filtered = service.findFiltered(city, startDate, endDate, category)
+        return ResponseEntity.ok(filtered)
+    }
+
     @GetMapping("/{id}")
     fun getExperienceById(@PathVariable id: Long): ResponseEntity<Experience> {
         val experience = service.findById(id)
-        return if (experience != null) {
-            ResponseEntity.ok(experience)
-        } else {
-            ResponseEntity.notFound().build()
-        }
+        return if (experience != null) ResponseEntity.ok(experience)
+        else ResponseEntity.notFound().build()
     }
 
-    /** Create a new experience with optional images. */
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasAnyAuthority('ADMIN', 'VERIFIED')")
     fun createExperience(
@@ -63,11 +76,8 @@ class ExperienceController(private val service: ExperienceService) {
     ): ResponseEntity<Experience> {
         return try {
             val updatedExperience = service.update(id, dto, images, authentication)
-            if (updatedExperience != null) {
-                ResponseEntity.ok(updatedExperience)
-            } else {
-                ResponseEntity.notFound().build()
-            }
+            if (updatedExperience != null) ResponseEntity.ok(updatedExperience)
+            else ResponseEntity.notFound().build()
         } catch (ex: Exception) {
             logger.error("Error updating experience: ", ex)
             ResponseEntity.badRequest().build()
@@ -81,11 +91,7 @@ class ExperienceController(private val service: ExperienceService) {
     fun deleteExperience(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             val deleted = service.delete(id)
-            if (deleted) {
-                ResponseEntity.noContent().build()
-            } else {
-                ResponseEntity.notFound().build()
-            }
+            if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
         } catch (ex: Exception) {
             logger.error("Error deleting experience: ", ex)
             ResponseEntity.badRequest().build()

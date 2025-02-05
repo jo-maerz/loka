@@ -8,6 +8,8 @@ import com.loka.server.entity.Image
 import com.loka.server.repository.ExperienceRepository
 import com.loka.server.repository.ImageRepository
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
@@ -18,20 +20,29 @@ import org.springframework.web.multipart.MultipartFile
 class ExperienceService(
         private val repository: ExperienceRepository,
         private val imageRepository: ImageRepository,
-        private val s3Client: AmazonS3 // Injected from MinioConfig
+        private val s3Client: AmazonS3
 ) {
 
     private val logger = LoggerFactory.getLogger(ExperienceService::class.java)
-
     private val bucketName = "my-bucket"
+    // Use the standard ISO_OFFSET_DATE_TIME formatter.
+    private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-    fun findAll(): List<Experience> {
-        return repository.findAll()
+    fun findAll(): List<Experience> = repository.findAll()
+
+    fun findFiltered(
+            city: String?,
+            startDate: OffsetDateTime?,
+            endDate: OffsetDateTime?,
+            category: String?
+    ): List<Experience> {
+        // Format OffsetDateTime parameters as ISO strings.
+        val startStr = startDate?.format(formatter)
+        val endStr = endDate?.format(formatter)
+        return repository.findByFilters(city, startStr, endStr, category)
     }
 
-    fun findById(id: Long): Experience? {
-        return repository.findById(id).orElse(null)
-    }
+    fun findById(id: Long): Experience? = repository.findById(id).orElse(null)
 
     @Transactional
     fun create(
@@ -40,8 +51,8 @@ class ExperienceService(
             authentication: Authentication
     ): Experience {
         val now = Instant.now().toString()
-        // Create an experience entity (without images yet)
-        var experience =
+
+        val experience =
                 Experience(
                         name = dto.name,
                         startDateTime = dto.startDateTime,
@@ -56,34 +67,34 @@ class ExperienceService(
                         createdBy = authentication.name
                 )
 
-        // Save initially to generate an ID
-        experience = repository.save(experience)
+        // Save initially to generate an ID.
+        var savedExperience = repository.save(experience)
 
+        // Process image uploads if provided.
         images?.forEach { multipartFile ->
             val originalFilename =
                     multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
             val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]".toRegex(), "_")
-
-            val objectKey = "experiences/${experience.id}/$cleanFilename"
-            // Prepare metadata (e.g. content length and type)
+            val objectKey = "experiences/${savedExperience.id}/$cleanFilename"
             val metadata =
                     ObjectMetadata().apply {
                         contentLength = multipartFile.size
                         contentType = multipartFile.contentType
                     }
-            // Upload file using the input stream (no temporary file needed)
             s3Client.putObject(bucketName, objectKey, multipartFile.inputStream, metadata)
             val fileUrl = s3Client.getUrl(bucketName, objectKey).toString()
 
-            // Create an Image entity and add it to the experience
             val imageEntity =
-                    Image(fileName = cleanFilename, filePath = fileUrl, experience = experience)
-            experience.images.add(imageEntity)
-
+                    Image(
+                            fileName = cleanFilename,
+                            filePath = fileUrl,
+                            experience = savedExperience
+                    )
+            savedExperience.images.add(imageEntity)
             logger.info("Uploaded $cleanFilename to S3 at $fileUrl")
         }
 
-        return repository.save(experience)
+        return repository.save(savedExperience)
     }
 
     @Transactional
@@ -103,12 +114,12 @@ class ExperienceService(
         existing.description = dto.description ?: ""
         existing.hashtags = dto.hashtags ?: listOf()
         existing.updatedAt = Instant.now().toString()
+        existing.category = dto.category
 
         images?.forEach { multipartFile ->
             val originalFilename =
                     multipartFile.originalFilename ?: "unknown-${System.currentTimeMillis()}"
             val cleanFilename = originalFilename.replace("[^A-Za-z0-9._-]".toRegex(), "_")
-
             val objectKey = "experiences/${existing.id}/$cleanFilename"
             val metadata =
                     ObjectMetadata().apply {
@@ -121,7 +132,6 @@ class ExperienceService(
             val imageEntity =
                     Image(fileName = cleanFilename, filePath = fileUrl, experience = existing)
             existing.images.add(imageEntity)
-
             logger.info("Uploaded $cleanFilename to S3 at $fileUrl")
         }
 
@@ -129,12 +139,11 @@ class ExperienceService(
     }
 
     @Transactional
-    fun delete(id: Long): Boolean {
-        return if (repository.existsById(id)) {
-            repository.deleteById(id)
-            true
-        } else {
-            false
-        }
-    }
+    fun delete(id: Long): Boolean =
+            if (repository.existsById(id)) {
+                repository.deleteById(id)
+                true
+            } else {
+                false
+            }
 }

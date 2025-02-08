@@ -60,7 +60,7 @@ export class ExperienceSidebarComponent implements OnInit {
   openEditModal(): void {
     const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
       width: '600px',
-      data: { ...this.experience },
+      data: { experience: this.experience },
     });
 
     dialogRef

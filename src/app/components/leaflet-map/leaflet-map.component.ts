@@ -207,7 +207,9 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   openCreateModal(): void {
     const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
       width: '600px',
-      data: {},
+      data: {
+        city: this.selectedCity,
+      },
     });
 
     dialogRef

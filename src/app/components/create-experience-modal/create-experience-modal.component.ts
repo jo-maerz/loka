@@ -89,17 +89,19 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   experienceForm!: FormGroup;
   loading: boolean = false;
 
-  // To store uploaded images
   uploadedImages: ExperienceImage[] = [];
 
-  // Instantiate our custom ErrorStateMatcher.
   dateRangeMatcher = new DateRangeErrorStateMatcher();
 
   private subscriptions: Subscription = new Subscription();
 
   constructor(
     public dialogRef: MatDialogRef<CreateExperienceModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: Experience,
+    @Inject(MAT_DIALOG_DATA)
+    public data: {
+      experience?: Experience;
+      city?: { name: string; lat: number; lng: number };
+    },
     private mapService: MapService,
     private fb: FormBuilder
   ) {}
@@ -118,41 +120,50 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   }
 
   initializeForm(): void {
+    const experience = this.data?.experience;
     this.experienceForm = this.fb.group(
       {
-        name: [this.data?.name || '', Validators.required],
+        name: [experience?.name || '', Validators.required],
         startDateTime: this.fb.group({
           date: [
-            this.data?.startDateTime ? new Date(this.data.startDateTime) : null,
+            experience?.startDateTime
+              ? new Date(experience.startDateTime)
+              : null,
             Validators.required,
           ],
           time: [
-            this.data?.startDateTime
-              ? this.formatTime(new Date(this.data.startDateTime))
+            experience?.startDateTime
+              ? this.formatTime(new Date(experience.startDateTime))
               : '00:00',
             Validators.required,
           ],
         }),
         endDateTime: this.fb.group({
           date: [
-            this.data?.endDateTime ? new Date(this.data.endDateTime) : null,
+            experience?.endDateTime ? new Date(experience.endDateTime) : null,
             Validators.required,
           ],
           time: [
-            this.data?.endDateTime
-              ? this.formatTime(new Date(this.data.endDateTime))
+            experience?.endDateTime
+              ? this.formatTime(new Date(experience.endDateTime))
               : '00:00',
             Validators.required,
           ],
         }),
-        address: [this.data?.address || '', Validators.required],
-        description: [this.data?.description || ''],
-        hashtags: [this.data?.hashtags ? this.data.hashtags.join(' ') : ''],
-        category: [this.data?.category || '', Validators.required],
-        images: [this.data?.images || []],
+        address: [experience?.address || '', Validators.required],
+        description: [experience?.description || ''],
+        hashtags: [experience?.hashtags ? experience.hashtags.join(' ') : ''],
+        category: [experience?.category || '', Validators.required],
+        images: [experience?.images || []],
         position: this.fb.group({
-          lat: [this.data?.position?.lat || 0, Validators.required],
-          lng: [this.data?.position?.lng || 0, Validators.required],
+          lat: [
+            experience?.position?.lat || this.data?.city?.lat || 50.1111,
+            Validators.required,
+          ],
+          lng: [
+            experience?.position?.lng || this.data?.city?.lng || 8.6821,
+            Validators.required,
+          ],
         }),
       },
       {
@@ -160,19 +171,19 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       }
     );
 
-    if (this.isEditMode() && this.data.position) {
+    if (this.isEditMode() && experience?.position) {
       this.experienceForm.patchValue({
-        address: this.data.address,
+        address: experience.address,
         position: {
-          lat: this.data.position.lat,
-          lng: this.data.position.lng,
+          lat: experience.position.lat,
+          lng: experience.position.lng,
         },
       });
     }
   }
 
   isEditMode(): boolean {
-    return this.data && this.data.id != null;
+    return !!this.data?.experience && this.data?.experience.id != null;
   }
 
   private formatTime(date: Date): string {
@@ -182,9 +193,12 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
   }
 
   initSelectMap(): void {
+    const position = this.data.experience?.position;
     const positionGroup = this.experienceForm.get('position') as FormGroup;
-    const initialLat = positionGroup.get('lat')?.value || 50.1155;
-    const initialLng = positionGroup.get('lng')?.value || 8.6724;
+    const initialLat =
+      positionGroup.get('lat')?.value || this.data?.city?.lat || 50.1111;
+    const initialLng =
+      positionGroup.get('lng')?.value || this.data?.city?.lng || 8.6821;
 
     this.selectMap = L.map('selectMap').setView([initialLat, initialLng], 14);
 
@@ -193,13 +207,8 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.selectMap);
 
-    if (
-      this.isEditMode() &&
-      this.data.position &&
-      this.data.position.lat &&
-      this.data.position.lng
-    ) {
-      this.addMarker(this.data.position.lat, this.data.position.lng);
+    if (this.isEditMode() && position && position.lat && position.lng) {
+      this.addMarker(position.lat, position.lng);
     }
 
     this.selectMap.on('click', this.onSelectMapClick.bind(this));
@@ -342,7 +351,7 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
     };
 
     const experience: Experience = {
-      id: this.data?.id,
+      id: this.data.experience?.id,
       name: this.experienceForm.get('name')?.value,
       startDateTime: new Date(startDateTime),
       endDateTime: new Date(endDateTime),
@@ -389,7 +398,10 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       hashtags: '',
       category: '',
       images: [],
-      position: { lat: 0, lng: 0 },
+      position: {
+        lat: this.data?.city?.lat || 50.1111,
+        lng: this.data?.city?.lng || 8.6821,
+      },
     });
     this.uploadedImages = [];
     if (this.selectMarker) {
@@ -397,6 +409,6 @@ export class CreateExperienceModalComponent implements OnInit, OnDestroy {
       this.selectMarker = null;
     }
     // Reset the map view to default.
-    this.selectMap.setView([50.1155, 8.6724], 14);
+    this.selectMap.setView([50.11111, 8.6821], 14);
   }
 }

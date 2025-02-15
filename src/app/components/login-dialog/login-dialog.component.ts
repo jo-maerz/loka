@@ -11,6 +11,7 @@ import { SignUpDialogComponent } from '../../sign-up-dialog/sign-up-dialog.compo
 export class LoginDialogComponent {
   email: string = '';
   password: string = '';
+  errorMessage: string = '';
 
   constructor(
     private dialogRef: MatDialogRef<LoginDialogComponent>,
@@ -19,12 +20,20 @@ export class LoginDialogComponent {
   ) {}
 
   login() {
+    this.errorMessage = '';
+
     if (!this.email || !this.password) return;
     this.authService
       .login(this.email, this.password)
       .then(() => this.dialogRef.close())
       .catch((error) => {
         console.error('Login failed:', error);
+        if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password.';
+        } else {
+          this.errorMessage =
+            'An unexpected error occurred. Please try again later.';
+        }
       });
   }
 

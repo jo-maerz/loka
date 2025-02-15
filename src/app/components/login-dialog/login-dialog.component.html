@@ -16,7 +16,11 @@
         required
       />
     </mat-form-field>
+    <mat-error *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </mat-error>
   </form>
+
   <p class="signup-link">
     Don't have an account?
     <a href="#" (click)="openSignUp($event)">Sign Up</a>

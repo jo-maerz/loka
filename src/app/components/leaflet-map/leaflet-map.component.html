@@ -35,7 +35,7 @@
           </mat-form-field>
         </div>
 
-        <div class="col-3">
+        <div class="col-2">
           <mat-form-field appearance="fill" class="full-width">
             <mat-label>Start Date</mat-label>
             <input
@@ -51,7 +51,7 @@
         </div>
 
         <!-- End Date Picker -->
-        <div class="col-3">
+        <div class="col-2">
           <mat-form-field appearance="fill" class="full-width">
             <mat-label>End Date</mat-label>
             <input
@@ -82,11 +82,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-      </div>
-
-      <!-- Second row with login/logout (optional) -->
-      <div class="row bg-light px-2">
-        <div class="col">
+        <div class="col d-flex justify-content-end" style="margin-top: 10px">
           <button
             mat-flat-button
             (click)="openLoginModal()"

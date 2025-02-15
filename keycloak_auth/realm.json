@@ -7,6 +7,7 @@
       "clientId": "loka-client",
       "enabled": true,
       "publicClient": true,
+      "directAccessGrantsEnabled": true,
       "redirectUris": [
         "http://localhost:4200/*"
       ],
@@ -86,6 +87,22 @@
         }
       ],
       "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "verifieduser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Verified",
+      "lastName": "User",
+      "email": "verifieduser@loka.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "userpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["VERIFIED"]
     }
   ]
 }

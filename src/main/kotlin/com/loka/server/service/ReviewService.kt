@@ -7,6 +7,7 @@ import com.loka.server.repository.ReviewRepository
 import com.loka.server.repository.UserRepository
 import java.time.Instant
 import org.slf4j.LoggerFactory
+import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,7 +21,12 @@ class ReviewService(
 
     /** Creates a new review for an experience by a user. */
     @Transactional
-    fun createReview(userId: Long, experienceId: Long, dto: ReviewDTO): Review {
+    fun createReview(
+            userId: Long,
+            experienceId: Long,
+            dto: ReviewDTO,
+            authentication: Authentication
+    ): Review {
         val user =
                 userRepository.findById(userId).orElseThrow {
                     IllegalArgumentException("User not found")
@@ -48,7 +54,8 @@ class ReviewService(
                         user = user,
                         experience = experience,
                         createdAt = Instant.now().toString(),
-                        updatedAt = Instant.now().toString()
+                        updatedAt = Instant.now().toString(),
+                        createdBy = authentication.name
                 )
 
         return reviewRepository.save(review)
@@ -61,6 +68,10 @@ class ReviewService(
                     IllegalArgumentException("Experience not found")
                 }
         return reviewRepository.findByExperience(experience)
+    }
+
+    fun getReviewById(id: Long): Review? {
+        return reviewRepository.findById(id).orElse(null)
     }
 
     /** Updates an existing review. Only admins can perform this action. */

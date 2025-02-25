@@ -24,5 +24,6 @@ data class Review(
         @JsonBackReference
         var experience: Experience = Experience(),
         @Column(nullable = false) var createdAt: String = Instant.now().toString(),
-        @Column(nullable = false) var updatedAt: String = Instant.now().toString()
+        @Column(nullable = false) var updatedAt: String = Instant.now().toString(),
+        var createdBy: String? = null
 )

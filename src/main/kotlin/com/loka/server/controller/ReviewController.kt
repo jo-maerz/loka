@@ -30,7 +30,8 @@ class ReviewController(private val reviewService: ReviewService) {
                     reviewService.userRepository.findByKeycloakId(userKeycloakId).orElseThrow {
                         IllegalArgumentException("User not found")
                     }
-            val review = reviewService.createReview(user.id, experienceId, reviewDTO)
+            val review =
+                    reviewService.createReview(user.id, experienceId, reviewDTO, authentication)
             ResponseEntity.status(HttpStatus.CREATED).body(toReviewResponseDTO(review))
         } catch (ex: Exception) {
             logger.error("Error creating review: ", ex)
@@ -51,14 +52,16 @@ class ReviewController(private val reviewService: ReviewService) {
         }
     }
 
-    @PutMapping("/{reviewId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/{id}")
+    @PreAuthorize(
+            "hasAnyAuthority('ADMIN', 'VERIFIED') and @reviewSecurity.isOwner(#id, authentication)"
+    )
     fun updateReview(
-            @PathVariable reviewId: Long,
+            @PathVariable id: Long,
             @RequestBody @Valid reviewDTO: ReviewDTO
     ): ResponseEntity<ReviewResponseDTO> {
         return try {
-            val updatedReview = reviewService.updateReview(reviewId, reviewDTO)
+            val updatedReview = reviewService.updateReview(id, reviewDTO)
             ResponseEntity.ok(toReviewResponseDTO(updatedReview))
         } catch (ex: Exception) {
             logger.error("Error updating review: ", ex)
@@ -66,11 +69,13 @@ class ReviewController(private val reviewService: ReviewService) {
         }
     }
 
-    @DeleteMapping("/{reviewId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    fun deleteReview(@PathVariable reviewId: Long): ResponseEntity<Void> {
+    @DeleteMapping("/{id}")
+    @PreAuthorize(
+            "hasAnyAuthority('ADMIN', 'VERIFIED') and @reviewSecurity.isOwner(#id, authentication)"
+    )
+    fun deleteReview(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
-            reviewService.deleteReview(reviewId)
+            reviewService.deleteReview(id)
             ResponseEntity.noContent().build()
         } catch (ex: Exception) {
             logger.error("Error deleting review: ", ex)

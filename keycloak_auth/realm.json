@@ -8,9 +8,7 @@
       "enabled": true,
       "publicClient": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": [
-        "http://localhost:4200/*"
-      ],
+      "redirectUris": ["http://localhost:4200/*"],
       "webOrigins": ["+"],
       "protocolMappers": [
         {
@@ -92,9 +90,25 @@
       "username": "verifieduser",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Verified",
-      "lastName": "User",
+      "firstName": "Max",
+      "lastName": "Mustermann",
       "email": "verifieduser@loka.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "userpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["VERIFIED"]
+    },
+    {
+      "username": "verifieduser2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Erika",
+      "lastName": "Mustermann",
+      "email": "verifieduser2@loka.de",
       "credentials": [
         {
           "type": "password",

@@ -3,16 +3,13 @@
  * start_all.js
  *
  * Starts all required services for the project:
- *   - Docker services (Postgres/pgAdmin, MiniO, Keycloak)
+ *   - Docker services (Postgres/pgAdmin, MinIO, Keycloak)
  *   - Maven-based Spring Boot backend
- *   - Angular frontend
- *
- * The script waits for dependent services to be ready before starting the backend.
+ *   - Angular frontend (with npm install before starting)
  *
  * Prerequisites: Docker, docker-compose, Maven, Node.js (v18+), and npm.
  *
- * Note: This file should be located in the loca-server repository. It assumes that
- * the loca-server and loca-app-angular repositories reside as sibling folders.
+ * This version of the script is located in: loka-server/setup_script/
  */
 
 const { spawn } = require("child_process");
@@ -20,6 +17,43 @@ const net = require("net");
 const http = require("http");
 const path = require("path");
 const process = require("process");
+const { execSync } = require("child_process");
+
+// Ensure aws-sdk is installed.
+try {
+  require.resolve("aws-sdk");
+} catch (e) {
+  console.log("aws-sdk not found. Installing...");
+  execSync("npm install aws-sdk", { stdio: "inherit" });
+}
+const AWS = require("aws-sdk");
+
+// Configure the S3 client for MinIO
+const s3 = new AWS.S3({
+  accessKeyId: "minioadmin",
+  secretAccessKey: "minioadmin",
+  region: "us-east-1", // required but ignored by MinIO
+  s3ForcePathStyle: true, // Use path-style URLs for S3
+  endpoint: "http://localhost:9000",
+});
+
+// Define a bucket policy for public read access
+const bucketPolicy = {
+  Version: "2012-10-17",
+  Statement: [
+    {
+      Sid: "PublicReadGetObject",
+      Effect: "Allow",
+      Principal: "*",
+      Action: ["s3:GetObject"],
+      Resource: ["arn:aws:s3:::my-bucket/*"],
+    },
+  ],
+};
+
+//
+// Utility functions
+//
 
 /**
  * Spawns a command in a given working directory.
@@ -46,18 +80,28 @@ function runCommand(command, args, cwd) {
 }
 
 /**
- * Spawns a command and returns a Promise that resolves when the command exits successfully.
+ * Spawns a command and returns a Promise that resolves when the process exits.
  */
-function runCommandAndWait(command, args, cwd) {
+function runCommandPromise(command, args, cwd) {
+  console.log(`Starting: ${command} ${args.join(" ")} in ${cwd}`);
   return new Promise((resolve, reject) => {
-    const child = runCommand(command, args, cwd);
+    const child = spawn(command, args, {
+      cwd,
+      shell: true,
+      stdio: "inherit",
+    });
+    child.on("error", (err) => {
+      console.error(`Error starting ${command}:`, err);
+      reject(err);
+    });
     child.on("exit", (code, signal) => {
+      console.log(
+        `Process ${child.pid} exited with code ${code} (signal: ${signal})`
+      );
       if (code === 0) {
         resolve();
       } else {
-        reject(
-          new Error(`${command} ${args.join(" ")} exited with code ${code}`)
-        );
+        reject(new Error(`Process exited with code ${code}`));
       }
     });
   });
@@ -189,14 +233,6 @@ async function waitForHTTPService(url, retries = 100, interval = 1000) {
   throw new Error(
     `HTTP service at ${url} did not start after ${retries} retries.`
   );
-}
-
-/**
- * Waits for essential services (Postgres and Keycloak) to be operational.
- */
-async function waitForServices() {
-  await waitForTCPService("localhost", 5432); // PostgreSQL
-  await waitForHTTPService("http://localhost:8081"); // Keycloak
 }
 
 /**
@@ -348,12 +384,50 @@ async function configureAdminCli() {
   }
 }
 
-// Define directory paths.
-// Since this script is in the loca-server repo, we use __dirname for the server
-// and assume the loca-app-angular repo is a sibling folder.
-const serverDir = __dirname;
-const angularDir = path.join(__dirname, "../loka-app-angular");
+/**
+ * Configures the MinIO bucket and sets its policy to public.
+ */
+async function configureMinioBucket() {
+  try {
+    // Wait for MinIO's TCP port to be available.
+    await waitForTCPService("localhost", 9000);
+    console.log("MinIO is up. Configuring bucket...");
 
+    // Check if bucket exists.
+    try {
+      await s3.headBucket({ Bucket: "my-bucket" }).promise();
+      console.log("Bucket 'my-bucket' already exists.");
+    } catch (err) {
+      if (err.statusCode === 404) {
+        await s3.createBucket({ Bucket: "my-bucket" }).promise();
+        console.log("Bucket 'my-bucket' created.");
+      } else {
+        throw err;
+      }
+    }
+
+    // Apply the public bucket policy.
+    await s3
+      .putBucketPolicy({
+        Bucket: "my-bucket",
+        Policy: JSON.stringify(bucketPolicy),
+      })
+      .promise();
+    console.log("Bucket 'my-bucket' policy updated to public.");
+  } catch (err) {
+    console.error("Error configuring MinIO bucket:", err);
+  }
+}
+
+//
+// Define directory paths.
+// Now that the script is in loka-server/setup_script,
+// - lokaServerDir is the parent folder.
+// - lokaAppDir is two levels up, then into loka-app-angular.
+const lokaServerDir = path.join(__dirname, "..");
+const lokaAppDir = path.join(__dirname, "..", "..", "loka-app-angular");
+
+//
 // Store spawned processes.
 const processes = [];
 
@@ -364,23 +438,27 @@ async function startProject() {
   console.log("Starting Docker services...");
 
   // Start Docker Compose services.
-  const postgresProcess = await startDockerComposeIfNotRunning(serverDir);
+  // Assuming the Postgres (and possibly other services) compose file is in lokaServerDir
+  const postgresProcess = await startDockerComposeIfNotRunning(lokaServerDir);
   if (postgresProcess) processes.push(postgresProcess);
 
+  // MinIO Docker Compose is now assumed to be in the "miniO" subfolder of lokaServerDir.
   const minioProcess = await startDockerComposeIfNotRunning(
-    path.join(serverDir, "miniO")
+    path.join(lokaServerDir, "miniO")
   );
   if (minioProcess) processes.push(minioProcess);
 
+  // Keycloak Compose is in the "keycloak_auth" subfolder of lokaServerDir.
   const keycloakProcess = await startDockerComposeIfNotRunning(
-    path.join(serverDir, "keycloak_auth")
+    path.join(lokaServerDir, "keycloak_auth")
   );
   const keycloakStarted = Boolean(keycloakProcess);
   if (keycloakProcess) processes.push(keycloakProcess);
 
   // Wait for Postgres and Keycloak to be ready.
   try {
-    await waitForServices();
+    await waitForTCPService("localhost", 5432); // PostgreSQL
+    await waitForHTTPService("http://localhost:8081"); // Keycloak
   } catch (err) {
     console.error("Error waiting for services:", err);
     process.exit(1);
@@ -398,21 +476,24 @@ async function startProject() {
     console.log("Keycloak already running; skipping admin-cli configuration.");
   }
 
-  // Start backend.
-  console.log("Starting Maven Spring Boot backend");
-  processes.push(runCommand("mvn", ["spring-boot:run"], serverDir));
+  // Configure MinIO bucket.
+  await configureMinioBucket();
 
-  // Install Angular dependencies and then start frontend.
-  console.log("Installing Angular frontend dependencies...");
+  // Start backend and frontend.
+  console.log("Starting Maven Spring Boot backend");
+  processes.push(runCommand("./mvnw", ["compile"], lokaServerDir));
+  processes.push(runCommand("mvn", ["spring-boot:run"], lokaServerDir));
+
+  console.log("Installing Angular frontend dependencies");
   try {
-    await runCommandAndWait("npm", ["install"], angularDir);
+    await runCommandPromise("npm", ["i"], lokaAppDir);
   } catch (err) {
-    console.error("Error installing Angular dependencies:", err);
+    console.error("Error during npm install in Angular frontend:", err);
     process.exit(1);
   }
 
   console.log("Starting Angular frontend");
-  processes.push(runCommand("npm", ["start"], angularDir));
+  processes.push(runCommand("npm", ["start"], lokaAppDir));
 }
 
 /**
@@ -427,6 +508,7 @@ function shutdown() {
   });
   process.exit();
 }
+
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 

@@ -10,6 +10,8 @@ Before running the startup script, ensure you have the following installed:
 - [Maven](https://maven.apache.org/install.html)
 - [Node.js (v18+)](https://nodejs.org/) and [npm](https://www.npmjs.com/get-npm)
 
+Docker Desktop should be running in order to run the startup script successfully!
+
 ## Directory Structure
 
 Ensure the repositories are organized as sibling folders:
@@ -41,3 +43,12 @@ The `start_all.js` script will:
 3. **Stop the Services:**
    To stop all the services, press Ctrl+C in your terminal.
    The script will handle termination signals and cleanly shut down all spawned processes.
+
+## Test the project
+
+The project is currently set for dev environment.
+DataInitializer will create 5 experiences per city based on the current date time
+
+Following credentials can be used for testing purposes.
+
+- **Admin**: Admin can edit and delete all experiences and reviews

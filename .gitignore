@@ -61,3 +61,5 @@ build/
 
 # Help files
 HELP.md
+
+setup_script/node_modules

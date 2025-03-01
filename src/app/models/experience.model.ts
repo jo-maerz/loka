@@ -34,4 +34,5 @@ export interface Experience {
   category?: Category;
   images?: ExperienceImage[];
   createdBy?: string;
+  city?: string;
 }

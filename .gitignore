@@ -26,6 +26,7 @@ libpeerconnection.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.idea/
 
 # macOS and Windows system files
 .DS_Store

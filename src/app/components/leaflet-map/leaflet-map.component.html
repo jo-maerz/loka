@@ -9,6 +9,7 @@
     <app-experience-sidebar
       *ngIf="selectedExperience"
       [experience]="selectedExperience"
+      [city]="selectedCity"
       (closeSidebar)="closeSidebar()"
       (refreshMap)="refreshMap()"
     >

@@ -14,6 +14,7 @@ import { ConfirmDeleteModalComponent } from '../confirm-delete-modal/confirm-del
 import { AuthService } from '../../services/auth.service';
 import { ReviewService } from '../../services/review.service';
 import { Review } from '../../models/review.model';
+import { City } from '../../models/constants';
 
 @Component({
   selector: 'app-experience-sidebar',
@@ -22,6 +23,7 @@ import { Review } from '../../models/review.model';
 })
 export class ExperienceSidebarComponent implements OnInit {
   @Input() experience!: Experience;
+  @Input() city!: City;
   @Input() isOpen: boolean = false; // (Optional) If your container toggles the sidebar via an input, add:
   @Output() refreshMap = new EventEmitter<void>();
   @Output() closeSidebar = new EventEmitter<void>();
@@ -60,7 +62,7 @@ export class ExperienceSidebarComponent implements OnInit {
   openEditModal(): void {
     const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
       width: '600px',
-      data: { experience: this.experience },
+      data: { experience: this.experience, city: this.city },
     });
 
     dialogRef
@@ -76,9 +78,22 @@ export class ExperienceSidebarComponent implements OnInit {
             )
             .subscribe(() => {
               this.refreshMap.emit();
+              this.refreshExperience();
             });
         }
       });
+  }
+
+  refreshExperience(): void {
+    this.experienceService.getExperienceById(this.experience.id!).subscribe({
+      next: (updatedExperience) => {
+        this.experience = updatedExperience;
+        this.refreshReviews(); // Ensure reviews are also refreshed
+      },
+      error: (err) => {
+        console.error('Error refreshing experience:', err);
+      },
+    });
   }
 
   openDeleteModal(): void {

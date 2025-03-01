@@ -53,5 +53,6 @@ data class Experience(
         // For createdAt and updatedAt we keep them as strings in ISO format.
         var createdAt: String = "",
         var updatedAt: String = "",
-        var createdBy: String? = null
+        var createdBy: String? = null,
+        var city: String = ""
 )

@@ -64,7 +64,8 @@ class ExperienceService(
                         category = dto.category,
                         createdAt = now,
                         updatedAt = now,
-                        createdBy = authentication.name
+                        createdBy = authentication.name,
+                        city = dto.city
                 )
 
         // Save initially to generate an ID.
@@ -115,6 +116,7 @@ class ExperienceService(
         existing.hashtags = dto.hashtags ?: listOf()
         existing.updatedAt = Instant.now().toString()
         existing.category = dto.category
+        existing.city = dto.city
 
         images?.forEach { multipartFile ->
             val originalFilename =

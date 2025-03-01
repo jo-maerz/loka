@@ -13,5 +13,6 @@ data class ExperienceDTO(
         val position: Position,
         val description: String?,
         val hashtags: List<String>?,
-        val category: String
+        val category: String,
+        val city: String
 )

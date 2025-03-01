@@ -31,13 +31,13 @@ class ExperienceController(private val service: ExperienceService) {
             @RequestParam(required = false) city: String?,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            startDate: OffsetDateTime?,
+            startDateTime: OffsetDateTime?,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            endDate: OffsetDateTime?,
+            endDateTime: OffsetDateTime?,
             @RequestParam(required = false) category: String?
     ): ResponseEntity<List<Experience>> {
-        val filtered = service.findFiltered(city, startDate, endDate, category)
+        val filtered = service.findFiltered(city, startDateTime, endDateTime, category)
         return ResponseEntity.ok(filtered)
     }
 

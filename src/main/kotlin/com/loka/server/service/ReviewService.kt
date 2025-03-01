@@ -38,7 +38,7 @@ class ReviewService(
                 }
 
         // Prevent creators from reviewing their own experience
-        if (experience.createdBy == user.email) {
+        if (experience.createdBy == user.keycloakId) {
             throw IllegalArgumentException("Creators cannot review their own experiences.")
         }
 

@@ -10,11 +10,14 @@ interface ExperienceRepository : JpaRepository<Experience, Long> {
         @Query(
                 value =
                         """
-                        SELECT e.* 
+                        SELECT e.*
                         FROM experience e
-                        WHERE (:city IS NULL OR e.address ILIKE concat('%', :city, '%'))
-                        AND (:startDate IS NULL OR e.start_date_time >= CAST(:startDate AS timestamptz))
-                        AND (:endDate   IS NULL OR e.end_date_time   <= CAST(:endDate   AS timestamptz))
+                        WHERE (:city IS NULL OR e.city = :city)
+                        AND (
+                            (:startDate IS NULL AND :endDate IS NULL) 
+                            OR (:startDate IS NOT NULL AND e.end_date_time <= CAST(:endDate AS timestamptz) AND e.end_date_time >= CAST(:startDate AS timestamptz))
+                            OR (:endDate IS NOT NULL AND e.start_date_time <= CAST(:endDate AS timestamptz)  AND e.start_date_time >= CAST(:startDate AS timestamptz))
+                        )
                         AND (:category  IS NULL OR e.category = :category)
                         """,
                 nativeQuery = true

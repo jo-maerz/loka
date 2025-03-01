@@ -12,7 +12,7 @@
  * This version of the script is located in: loka-server/setup_script/
  */
 
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 const net = require("net");
 const http = require("http");
 const path = require("path");
@@ -51,9 +51,18 @@ const bucketPolicy = {
   ],
 };
 
-//
-// Utility functions
-//
+/**
+ * Checks if Docker is installed and running.
+ */
+function checkDockerInstalled() {
+  const result = spawnSync("docker", ["info"], { shell: true });
+  if (result.error) {
+    console.error(
+      "Docker is not installed or not running. Please ensure Docker is installed and started."
+    );
+    process.exit(1);
+  }
+}
 
 /**
  * Spawns a command in a given working directory.
@@ -132,10 +141,19 @@ async function startDockerComposeIfNotRunning(cwd) {
       return null;
     }
     console.log(`Starting Docker Compose services in ${cwd}...`);
-    return runCommand("docker compose", ["up", "-d"], cwd);
+    const proc = runCommand("docker compose", ["up", "-d"], cwd);
+    proc.on("exit", (code) => {
+      if (code !== 0) {
+        console.error(
+          `Docker Compose in ${cwd} exited with code ${code}. Please check the service logs.`
+        );
+        // Decide here whether to exit the script or continue
+      }
+    });
+    return proc;
   } catch (err) {
-    console.error("Error checking Docker Compose status:", err);
-    throw err;
+    console.error("Error checking or starting Docker Compose:", err);
+    process.exit(1);
   }
 }
 
@@ -196,7 +214,7 @@ function checkHTTP(url, timeout = 1000) {
 /**
  * Waits for a TCP service to be available.
  */
-async function waitForTCPService(host, port, retries = 100, interval = 1000) {
+async function waitForTCPService(host, port, retries = 300, interval = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
       await checkTCP(host, port, interval);
@@ -206,6 +224,7 @@ async function waitForTCPService(host, port, retries = 100, interval = 1000) {
       console.log(
         `Waiting for TCP service on ${host}:${port}... (${i + 1}/${retries})`
       );
+      console.log("Is Docker Desktop on?");
       await new Promise((res) => setTimeout(res, interval));
     }
   }
@@ -217,7 +236,7 @@ async function waitForTCPService(host, port, retries = 100, interval = 1000) {
 /**
  * Waits for an HTTP service to be available.
  */
-async function waitForHTTPService(url, retries = 100, interval = 1000) {
+async function waitForHTTPService(url, retries = 300, interval = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
       await checkHTTP(url, interval);
@@ -435,6 +454,9 @@ const processes = [];
  * Starts all services and applications.
  */
 async function startProject() {
+  // First, check if Docker is installed and running.
+  checkDockerInstalled();
+
   console.log("Starting Docker services...");
 
   // Start Docker Compose services.
@@ -480,9 +502,9 @@ async function startProject() {
   await configureMinioBucket();
 
   // Start backend and frontend.
+  // Using spring-boot:run will compile if necessary.
   console.log("Starting Maven Spring Boot backend");
-  processes.push(runCommand("./mvnw", ["compile"], lokaServerDir));
-  processes.push(runCommand("mvn", ["spring-boot:run"], lokaServerDir));
+  processes.push(runCommand("mvn", ["clean compile spring-boot:run"], lokaServerDir));
 
   console.log("Installing Angular frontend dependencies");
   try {

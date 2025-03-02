@@ -1,27 +1,45 @@
-# LokaAppAngular
+# Loka Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.11.
+This repository contains the Angular frontend for the Loka application. The backend services and startup scripts are managed in a separate repository: [Loka Server](https://github.com/jo-maerz/loka-server).
 
-## Development server
+## Prerequisites
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Before running the frontend, ensure that the following are installed:
 
-## Code scaffolding
+- [Node.js (v18+)](https://nodejs.org/) and [npm](https://www.npmjs.com/get-npm)
+- The backend services should be running. Refer to the [Loka Server repository](https://github.com/jo-maerz/loka-server) for instructions on setting up the backend.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Project Structure
 
-## Build
+Ensure the repositories are organized as sibling folders:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```
+parent-folder/
+├── loka-server/         # Backend services and startup script (start_all.js)
+└── loka-app-angular/    # Angular frontend
+```
 
-## Running unit tests
+## Running the Frontend
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The `start_all.js` script in the backend repository handles the frontend build and startup automatically. If you need to manually start the frontend:
 
-## Running end-to-end tests
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd /path/to/parent-folder/loka-app-angular
+   ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Start the development server:**
+   ```bash
+   npm start
+   ```
+   The application will be available at `http://localhost:4200/`.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Additional Notes
 
-## Further help
+- The backend must be running for the application to function correctly.
+- For backend setup details, refer to the [Loka Server repository](https://github.com/jo-maerz/loka-server).
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+For further assistance, refer to the backend documentation or contact the project maintainers.

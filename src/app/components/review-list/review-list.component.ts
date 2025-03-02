@@ -39,7 +39,7 @@ export class ReviewListComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     // If reloadKey changes (and it's not the first change), reload the reviews.
-    if (changes['reloadKey'] && !changes['reloadKey'].firstChange) {
+    if (changes['reloadKey'] && !changes['reloadKey'].firstChange || changes['experienceId']) {
       this.loadReviews();
     }
   }

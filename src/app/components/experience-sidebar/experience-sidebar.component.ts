@@ -68,6 +68,7 @@ export class ExperienceSidebarComponent implements OnInit {
     dialogRef
       .afterClosed()
       .subscribe((result: { experience: Experience; files: File[] }) => {
+        console.log(result)
         if (result) {
           const { id, images, ...experienceDto } = result.experience;
           this.experienceService

@@ -33,12 +33,12 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('drawer') drawer!: MatSidenav;
 
   map!: L.Map;
-
   experiences: Experience[] = [];
   experiencesSubscription!: Subscription;
 
   cities = CITIES;
   selectedCity = this.cities[0];
+  previousCity = this.selectedCity;
 
   startDate!: Date;
   endDate!: Date;
@@ -57,11 +57,9 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     'Tech Talk',
     'Others',
   ];
-
   selectedCategory: string | null = null;
 
   private markerMap = new Map<number, L.Marker>();
-
   selectedExperience?: Experience;
 
   matcher: ErrorStateMatcher = {
@@ -101,9 +99,7 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  // =============== MAP SETUP ===============
   loadLeafletIcons(): void {
-    // Leaflet icon fix
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: markerIcon2x,
@@ -128,26 +124,22 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // =============== FILTER HANDLER ===============
   onDateChange(changedField: 'start' | 'end'): void {
-    // Reset error
     this.dateError = null;
     if (this.startDate && this.endDate) {
-      // If the end date is before the start date, show an error
       if (this.endDate < this.startDate) {
         this.dateError =
           'End Date cannot be before Start Date. Please correct the dates.';
       } else {
-        // Valid date range => refresh map
         this.onFilterChange();
       }
-      console.log(this.dateError);
     }
   }
 
   onFilterChange(): void {
-    if (this.map && this.selectedCity) {
+    if (this.selectedCity !== this.previousCity) {
       this.map.setView([this.selectedCity.lat, this.selectedCity.lng], 16);
+      this.previousCity = this.selectedCity;
     }
     this.fetchExperiencesFiltered();
     this.closeSidebar();
@@ -173,15 +165,12 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  // =============== MARKER SYNC & SIDEBAR ===============
   updateMarkers(): void {
-    // Remove existing markers
     for (const [_, marker] of this.markerMap.entries()) {
       marker.remove();
     }
     this.markerMap.clear();
 
-    // Add new markers
     for (const exp of this.experiences) {
       if (exp.id != null && exp.position) {
         const newMarker = L.marker([exp.position.lat, exp.position.lng]).addTo(
@@ -203,7 +192,6 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedExperience = undefined;
   }
 
-  // =============== CREATE EXPERIENCE ===============
   openCreateModal(): void {
     const dialogRef = this.dialog.open(CreateExperienceModalComponent, {
       width: '600px',
@@ -234,7 +222,6 @@ export class LeafletMapComponent implements OnInit, OnDestroy, AfterViewInit {
   openLoginModal() {
     this.dialog.open(LoginDialogComponent, {
       width: '600px',
-      data: {},
     });
   }
 

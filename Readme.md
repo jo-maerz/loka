@@ -1,63 +1,69 @@
-# Project Startup
+# Loka Application
 
-This repository contains the backend services and a startup script to initialize all necessary project dependencies. The Angular frontend resides in a sibling repository (`loka-app-angular`).
+This repository contains both the backend services (`loka-server`) and the Angular frontend (`loka-app-angular`) for the Loka application.
+
+## Overview
+
+Loka is a web application featuring a backend built with Kotlin and a frontend developed using Angular. This repository combines both the backend (`loka-server`) and frontend (`loka-app-angular`) into a single cohesive structure.
 
 ## Prerequisites
 
-Before running the startup script, ensure you have the following installed:
+Ensure you have the following installed:
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 - [Maven](https://maven.apache.org/install.html)
-- [Node.js (v18+)](https://nodejs.org/) and [npm](https://www.npmjs.com/get-npm)
+- [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/get-npm)
 
-Ensure that **Docker Desktop** is running before executing the startup script.
+Make sure Docker Desktop is running before executing the startup script.
 
 ## Directory Structure
 
-Ensure the repositories are organized as sibling folders:
+The repository structure is as follows:
 
 ```
-parent-folder/
-├── loka-server/         # Contains the backend and the startup script (start_all.js)
-└── loka-app-angular/    # Contains the Angular frontend
+loka/
+├── loka-server/          # Backend services and scripts
+└── loka-app-angular/     # Angular frontend
 ```
 
 ## Starting the Project
 
-1. **Navigate to the `setup_script` directory in `loka-server`:**
+Use the provided startup script to launch the entire project:
 
-   ```bash
-   cd /path/to/parent-folder/loka-server/setup_script
-   ```
+```bash
+cd loka-server/setup_script
+node start_all.js
+```
 
-2. **Run the startup script:**
+The `start_all.js` script performs the following:
 
-   ```bash
-   node start_all.js
-   ```
+- Starts necessary Docker services: PostgreSQL, MinIO, and Keycloak.
+- Waits until all backend services are fully operational.
+- Initializes the Angular frontend (if not already started separately).
 
-   The `start_all.js` script will:
+To stop all running services, press `Ctrl+C`. The script will gracefully shut down all processes.
 
-   - **Start Docker services**: Initializes PostgreSQL/pgAdmin, MinIO, and Keycloak (if not already running).
-   - **Wait for services**: Ensures that PostgreSQL and Keycloak are fully operational before proceeding.
-   - **Configure Keycloak**: Sets up the Keycloak `admin-cli` client via its Admin REST API.
-   - **Launch backend**: Runs the Maven-based Spring Boot backend.
-   - **Launch frontend**: Installs Angular dependencies (via `npm install`) and starts the Angular application.
+### Starting Frontend Manually (optional)
 
-3. **Stopping the Services:**
-   To stop all running services, press `Ctrl+C` in your terminal.
-   The script handles termination signals and will cleanly shut down all spawned processes.
+If needed, the frontend can be started manually:
 
-## Testing the Project
+```bash
+cd loka-app-angular
+npm install
+npm start
+```
 
-The project is configured for the **development environment**. The `DataInitializer` will generate 5 experiences per city based on the current date and time.
+## Testing
 
-### User Roles and Test Credentials
+The default setup uses the **development environment**, automatically generating sample data via the `DataInitializer`.
 
-There are three user roles in the application:
+**User Roles for Testing:**
 
-- **Admin**: Can edit and delete all experiences and reviews.
-  - **Test credentials**: `admin@loka.de` / `adminpassword`
-- **Verified User**: Can create, edit, and delete their own experiences and reviews.
-  - **Test credentials**: `verifieduser@loka.de` / `userpassword`
-- **Guest**: Can view all experiences and reviews (no credentials required).
+| Role              | Permissions                                        | Credentials                             |
+| ----------------- | -------------------------------------------------- | --------------------------------------- |
+| **Guest**         | View all experiences and reviews                   | No credentials required                 |
+| **Verified User** | Create, update, delete own experiences and reviews | `verifieduser@loka.de` / `userpassword` |
+| **Admin**         | All permissions                                    | `admin@loka.de` / `adminpassword`       |
+
+For any questions, please reach out to the project maintainer.
+Seulgi Jo-März / s.jo-maerz@outlook.com

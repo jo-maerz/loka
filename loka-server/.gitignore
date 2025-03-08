@@ -63,3 +63,4 @@ build/
 HELP.md
 
 setup_script/node_modules
+node_modules

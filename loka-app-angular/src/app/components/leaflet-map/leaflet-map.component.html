@@ -1,0 +1,123 @@
+<mat-sidenav-container
+  class="leaflet-sidenav-container"
+  [style.height]="'100vh'"
+  [hasBackdrop]="false"
+>
+  <!-- Overlay Sidenav (no backdrop) -->
+  <mat-sidenav #drawer mode="over" position="start" class="sidebar">
+    <!-- Sidebar content shown only if there's a selected experience -->
+    <app-experience-sidebar
+      *ngIf="selectedExperience"
+      [experience]="selectedExperience"
+      [city]="selectedCity"
+      (closeSidebar)="closeSidebar()"
+      (refreshMap)="refreshMap()"
+    >
+    </app-experience-sidebar>
+  </mat-sidenav>
+
+  <!-- Main map content -->
+  <mat-sidenav-content>
+    <div class="container-fluid d-flex flex-column vh-100">
+      <!-- Top row with city, start date, end date, category, login buttons -->
+      <div class="row bg-light px-2 pt-3">
+        <!-- City Dropdown -->
+        <div class="col-3">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Select City</mat-label>
+            <mat-select
+              [(value)]="selectedCity"
+              (selectionChange)="onFilterChange()"
+            >
+              <mat-option *ngFor="let c of cities" [value]="c">
+                {{ c.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="col-2">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Start Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="startPicker"
+              [(ngModel)]="startDate"
+              (dateChange)="onDateChange('start')"
+            />
+            <mat-datepicker-toggle matSuffix [for]="startPicker">
+            </mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <!-- End Date Picker -->
+        <div class="col-2">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>End Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="endPicker"
+              [(ngModel)]="endDate"
+              (dateChange)="onDateChange('end')"
+              [errorStateMatcher]="matcher"
+            />
+            <mat-datepicker-toggle matSuffix [for]="endPicker">
+            </mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+            <mat-error *ngIf="dateError">{{ dateError }}</mat-error>
+          </mat-form-field>
+        </div>
+        <!-- Category Dropdown -->
+        <div class="col-3">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Category</mat-label>
+            <mat-select
+              [(value)]="selectedCategory"
+              (selectionChange)="onFilterChange()"
+            >
+              <mat-option [value]="null">-- All Categories --</mat-option>
+              <mat-option *ngFor="let cat of categories" [value]="cat">
+                {{ cat }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="col d-flex justify-content-end" style="margin-top: 10px">
+          <button
+            mat-flat-button
+            (click)="openLoginModal()"
+            *ngIf="!authService.isLoggedIn"
+          >
+            Login
+          </button>
+          <button
+            mat-flat-button
+            (click)="logout()"
+            *ngIf="authService.isLoggedIn"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Map row -->
+      <div class="row flex-grow-1">
+        <div class="col-12 p-0 position-relative">
+          <div id="map" class="map-container"></div>
+
+          <!-- Floating + Button -->
+          <button
+            mat-fab
+            color="primary"
+            class="add-button"
+            (click)="openCreateModal()"
+            *ngIf="authService.isLoggedIn"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

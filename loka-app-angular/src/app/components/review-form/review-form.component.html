@@ -1,0 +1,48 @@
+<mat-card class="review-form-card">
+  <mat-card-title>Submit a Review</mat-card-title>
+  <mat-card-content>
+    <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
+      <!-- Rating Field -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Rating</mat-label>
+        <mat-select formControlName="stars" required>
+          <mat-option *ngFor="let r of [1, 2, 3, 4, 5]" [value]="r">
+            {{ r }} Star{{ r > 1 ? "s" : "" }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="reviewForm.get('stars')?.hasError('required')">
+          Rating is required.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Description Field -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="text" rows="5" required></textarea>
+        <mat-error *ngIf="reviewForm.get('text')?.hasError('required')">
+          Description is required.
+        </mat-error>
+        <mat-error *ngIf="reviewForm.get('text')?.hasError('maxlength')">
+          Description cannot exceed 1000 characters.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Submit Button -->
+      <div class="button-container">
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="reviewForm.invalid"
+        >
+          Submit Review
+        </button>
+      </div>
+
+      <!-- Error Message -->
+      <mat-error *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </mat-error>
+    </form>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,75 @@
+<!-- Top toolbar with the name and a close button -->
+<mat-toolbar color="primary" class="sidebar-toolbar">
+  <span>{{ experience.name }}</span>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="closeSidebar.emit()">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<!-- The content area (scrollable) -->
+<div class="sidebar-content">
+  <!-- Description -->
+  <p *ngIf="experience?.description" class="content-paragraph">
+    {{ experience.description }}
+  </p>
+
+  <!-- Address -->
+  <p *ngIf="experience?.address" class="content-paragraph">
+    <strong>Address:</strong> {{ experience.address }}
+  </p>
+
+  <!-- Category -->
+  <p *ngIf="(experience?.category)!.length > 0" class="content-paragraph">
+    <strong>Category:</strong> {{ experience.category }}
+  </p>
+
+  <!-- Dates -->
+  <p *ngIf="formattedDateRange" class="content-paragraph">
+    <strong>Dates:</strong> {{ formattedDateRange }}
+  </p>
+
+  <!-- Images in a grid (or horizontally scrollable) -->
+  <div *ngIf="(experience?.images)!.length > 0" class="images-container">
+    <div class="image-box" *ngFor="let img of experience.images">
+      <img [src]="img.filePath" alt="{{ img.fileName }}" class="image-img" />
+    </div>
+  </div>
+
+  <!-- Hashtags -->
+  <p
+    *ngIf="(experience?.hashtags)!.length > 0"
+    class="content-paragraph hashtags"
+  >
+    <strong>Hashtags:</strong> {{ experience.hashtags!.join(" ") }}
+  </p>
+</div>
+
+<!-- Footer with actions (edit/delete) pinned at the bottom -->
+<!-- Only show if the user is logged in and is the owner of the experience (or an admin) -->
+<div
+  class="sidebar-footer"
+  *ngIf="authService.isLoggedIn && authService.isOwner(experience.createdBy!)"
+>
+  <button mat-raised-button color="primary" (click)="openEditModal()">
+    Edit
+  </button>
+  <button mat-raised-button color="warn" (click)="openDeleteModal()">
+    Delete
+  </button>
+</div>
+
+<!-- Review Form: Only show if no review from the current user exists -->
+<app-review-form
+  *ngIf="experience?.id && authService.isLoggedIn && !userHasReviewed"
+  [experienceId]="experience.id!"
+  (reviewSubmitted)="onReviewSubmitted()"
+></app-review-form>
+
+<!-- Review List: Always show reviews. Pass the reloadKey so that the review list refreshes when it changes. -->
+<app-review-list
+  *ngIf="experience?.id"
+  [experienceId]="experience.id!"
+  [reloadKey]="reloadKey"
+  (reviewChanged)="onReviewChanged()"
+></app-review-list>

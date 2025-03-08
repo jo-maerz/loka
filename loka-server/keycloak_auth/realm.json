@@ -1,0 +1,122 @@
+{
+  "realm": "loka-realm",
+  "displayName": "Loka Realm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "loka-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:4200/*"],
+      "webOrigins": ["+"],
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "loka-backend",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "redirectUris": [],
+      "webOrigins": ["+"],
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "authorizationServicesEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Administrator role with full permissions"
+      },
+      {
+        "name": "VERIFIED",
+        "description": "Verified user role with standard permissions"
+      },
+      {
+        "name": "manage-users",
+        "description": "Permission to manage users"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@loka.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "adminpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "verifieduser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Max",
+      "lastName": "Mustermann",
+      "email": "verifieduser@loka.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "userpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["VERIFIED"]
+    },
+    {
+      "username": "verifieduser2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Erika",
+      "lastName": "Mustermann",
+      "email": "verifieduser2@loka.de",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "userpassword",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["VERIFIED"]
+    }
+  ]
+}
